@@ -6,102 +6,96 @@
 <title>Index Charts</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-
 :root{
-  --bg:#0c0e13;
-  --surface:#111318;
-  --surface2:#181b23;
-  --border:#1f2333;
-  --border2:#252a3d;
-  --text:#dde3f0;
-  --muted:#3d4460;
-  --dim:#1a1e2c;
-
-  --up:#00d68f;
-  --up-dim:rgba(0,214,143,.10);
-  --dn:#f0415a;
-  --dn-dim:rgba(240,65,90,.10);
-  --flat:#4f8ef7;
-  --flat-dim:rgba(79,142,247,.10);
-
-  --orb-fill:rgba(246,201,14,.06);
+  --bg:#0c0e13; --surface:#111318; --surface2:#181b23;
+  --border:#1f2333; --border2:#252a3d; --text:#dde3f0; --muted:#3d4460;
+  --up:#00d68f; --up-dim:rgba(0,214,143,.10);
+  --dn:#f0415a; --dn-dim:rgba(240,65,90,.10);
+  --flat:#4f8ef7; --flat-dim:rgba(79,142,247,.10);
   --orb-line:#f6c90e;
-
-  --c-banknifty:#4f8ef7;
-  --c-hdfc:#f6c90e;
-  --c-icici:#00d68f;
+  --c-banknifty:#4f8ef7; --c-hdfc:#f6c90e; --c-icici:#00d68f;
+  --yaxis-w:64px;
 }
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:12px;min-height:100vh;}
 
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:14px;min-height:100vh;}
-
-/* ── Header ──────────────────────────────────────────────── */
-.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+/* ── Header ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
 .hdr-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;color:#fff;text-transform:uppercase;}
 .hdr-title em{color:var(--flat);font-style:normal;}
-
-.hdr-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-
-.pulse{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s;}
+.hdr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0;}
 .pulse.live{background:var(--up);animation:blink 1.6s infinite;}
 @keyframes blink{0%{opacity:1;box-shadow:0 0 0 0 rgba(0,214,143,.4)}60%{opacity:.6;box-shadow:0 0 0 6px rgba(0,214,143,0)}100%{opacity:1;box-shadow:0 0 0 0 rgba(0,214,143,0)}}
-
 .status-chip{font-size:10px;color:var(--muted);letter-spacing:.04em;}
 .status-chip b{color:var(--text);font-weight:500;}
-
-/* interval pills */
-.iv-group{display:flex;gap:3px;}
-.iv-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
-.iv-btn.active,.iv-btn:hover{border-color:var(--flat);color:var(--flat);background:var(--flat-dim);}
-
-/* date picker */
-.date-group{display:flex;align-items:center;gap:6px;}
+.btn-group{display:flex;gap:3px;}
+.xbtn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.xbtn.active,.xbtn:hover{border-color:var(--flat);color:var(--flat);background:var(--flat-dim);}
+.xbtn.danger{border-color:var(--dn);color:var(--dn);}
+.xbtn.danger:hover{background:var(--dn-dim);}
+.date-group{display:flex;align-items:center;gap:5px;}
 .date-label{font-size:10px;color:var(--muted);}
-select.date-sel{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;}
-select.date-sel:focus{outline:none;border-color:var(--flat);}
+select.date-sel,input.date-sel{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 7px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;}
+select.date-sel:focus,input.date-sel:focus{outline:none;border-color:var(--flat);}
 .live-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;border-radius:4px;border:1px solid var(--up);color:var(--up);background:var(--up-dim);cursor:pointer;display:none;}
 .live-btn:hover{background:rgba(0,214,143,.2);}
+/* size controls */
+.size-group{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.size-group input[type=range]{width:60px;accent-color:var(--flat);cursor:pointer;}
+.size-val{min-width:18px;text-align:right;color:var(--text);}
 
-/* ── Chart cards ────────────────────────────────────────── */
+/* ── Chart cards ── */
 .charts-wrap{display:flex;flex-direction:column;gap:10px;}
-
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
 .chart-card.bnk{border-top:2px solid var(--c-banknifty);}
 .chart-card.hdf{border-top:2px solid var(--c-hdfc);}
 .chart-card.ici{border-top:2px solid var(--c-icici);}
 
 /* card header */
-.ch{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 0;flex-wrap:wrap;gap:6px;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0;flex-wrap:wrap;gap:6px;}
 .ch-left{display:flex;flex-direction:column;gap:1px;}
 .ch-name{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;}
 .ch-meta{font-size:9px;color:var(--muted);}
 .ch-right{display:flex;align-items:baseline;gap:8px;}
-.ch-ltp{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;transition:color .25s;}
+.ch-ltp{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;transition:color .25s;}
 .ch-ltp.up{color:var(--up);} .ch-ltp.dn{color:var(--dn);} .ch-ltp.fl{color:var(--flat);}
-.ch-chg{font-size:10px;font-weight:500;padding:2px 6px;border-radius:3px;}
+.ch-badges{display:flex;gap:5px;align-items:baseline;flex-wrap:wrap;}
+.ch-chg{font-size:10px;font-weight:500;padding:2px 6px;border-radius:3px;font-variant-numeric:tabular-nums;}
 .ch-chg.up{background:var(--up-dim);color:var(--up);}
 .ch-chg.dn{background:var(--dn-dim);color:var(--dn);}
 .ch-chg.fl{background:var(--flat-dim);color:var(--flat);}
+.ch-prev{font-size:9px;color:var(--muted);padding-top:1px;}
 
 /* ohlc strip */
-.ohlc{display:flex;gap:10px;padding:4px 12px;font-size:9px;color:var(--muted);flex-wrap:wrap;}
+.ohlc{display:flex;gap:10px;padding:3px 12px;font-size:9px;color:var(--muted);flex-wrap:wrap;}
 .ohlc .lbl{color:var(--muted);margin-right:2px;}
 .ohlc .val{color:var(--text);font-weight:500;}
+/* ORB strip */
+.orb-strip{display:flex;gap:10px;align-items:center;padding:2px 12px 4px;font-size:9px;color:var(--muted);}
+.orb-badge{padding:1px 6px;border-radius:3px;background:rgba(246,201,14,.12);color:var(--orb-line);font-weight:500;letter-spacing:.03em;}
 
-/* ORB badge */
-.orb-strip{display:flex;gap:10px;align-items:center;padding:2px 12px 5px;font-size:9px;color:var(--muted);}
-.orb-badge{padding:1px 7px;border-radius:3px;background:rgba(246,201,14,.12);color:var(--orb-line);font-weight:500;letter-spacing:.03em;}
+/* ── Chart scroll container ── */
+.chart-outer{position:relative;display:flex;border-top:1px solid var(--border);}
+/* Fixed Y-axis panel on the left */
+.yaxis-panel{flex-shrink:0;width:var(--yaxis-w);position:relative;background:var(--surface);}
+.yaxis-panel canvas{display:block;}
+/* Scrollable candle area */
+.scroll-area{flex:1;overflow-x:auto;overflow-y:hidden;cursor:crosshair;}
+.scroll-area::-webkit-scrollbar{height:4px;}
+.scroll-area::-webkit-scrollbar-track{background:var(--surface);}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.candle-canvas-wrap{position:relative;display:inline-block;}
+.candle-canvas-wrap canvas{display:block;}
+.no-data{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;letter-spacing:.05em;}
 
-/* canvas area */
-.cv-wrap{position:relative;height:190px;padding:6px 10px 6px 48px;overflow:hidden;cursor:crosshair;}
-canvas{display:block;width:100%!important;height:100%!important;}
-.no-data{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:10px;letter-spacing:.05em;}
-
-/* ── Tooltip ─────────────────────────────────────────────── */
-.tip{position:fixed;background:#1a1d28;border:1px solid var(--border2);border-radius:5px;padding:7px 10px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:200;line-height:1.75;white-space:nowrap;}
+/* ── Tooltip ── */
+.tip{position:fixed;background:#1a1d28;border:1px solid var(--border2);border-radius:5px;padding:7px 10px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:200;line-height:1.8;white-space:nowrap;}
 .tip.show{opacity:1;}
 .tip .tl{color:var(--muted);font-size:9px;margin-bottom:2px;}
+
+/* crosshair line */
+.crosshair{position:absolute;top:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none;display:none;}
 </style>
 </head>
 <body>
@@ -112,18 +106,36 @@ canvas{display:block;width:100%!important;height:100%!important;}
     <div class="pulse" id="pulse"></div>
     <div class="status-chip">AS OF <b id="as-of">--:--:--</b></div>
     <div class="status-chip">MODE <b id="mode-label">LIVE</b></div>
-    <div class="iv-group" id="iv-group">
-      <button class="iv-btn active" onclick="setIv(1,this)">1m</button>
-      <button class="iv-btn"        onclick="setIv(3,this)">3m</button>
-      <button class="iv-btn"        onclick="setIv(5,this)">5m</button>
+
+    <!-- Interval -->
+    <div class="btn-group">
+      <button class="xbtn active" onclick="setIv(1,this)">1m</button>
+      <button class="xbtn"        onclick="setIv(3,this)">3m</button>
+      <button class="xbtn"        onclick="setIv(5,this)">5m</button>
     </div>
+
+    <!-- Candle width -->
+    <div class="size-group">
+      W<input type="range" id="cw-slider" min="4" max="30" value="9"
+              oninput="setCW(+this.value)">
+      <span class="size-val" id="cw-val">9</span>
+    </div>
+
+    <!-- Chart height -->
+    <div class="size-group">
+      H<input type="range" id="ch-slider" min="120" max="500" step="10" value="200"
+              oninput="setCH(+this.value)">
+      <span class="size-val" id="ch-val">200</span>
+    </div>
+
+    <!-- Date -->
     <div class="date-group">
       <span class="date-label">DATE</span>
       <select class="date-sel" id="date-sel" onchange="onDateChange(this.value)">
         <option value="live">Live</option>
       </select>
-      <input type="date" class="date-sel" id="date-input" title="Pick any date"
-             onchange="onDateChange(this.value)" style="width:120px">
+      <input type="date" class="date-sel" id="date-input" style="width:118px"
+             onchange="onDateChange(this.value)">
     </div>
     <button class="live-btn" id="live-btn" onclick="goLive()">↺ LIVE</button>
   </div>
@@ -134,10 +146,9 @@ canvas{display:block;width:100%!important;height:100%!important;}
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const API   = '';          // same origin; set to 'http://your-server' if needed
-const POLL  = 500;         // ms between live tick polls
+const API  = '';
+const POLL = 500;
 
-// Must match kite_index_addon.py INDEX_TOKENS keys
 const INSTRUMENTS = [
   { id:'banknifty', token:'260105',  label:'BankNifty', cls:'bnk', color:'#4f8ef7' },
   { id:'hdfc',      token:'341249',  label:'HDFC Bank', cls:'hdf', color:'#f6c90e' },
@@ -145,24 +156,55 @@ const INSTRUMENTS = [
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let ivMin       = 1;
-let histDate    = null;   // null = live view; string = historical date being displayed
-let pollTimer   = null;
+let ivMin    = 1;
+let CW       = 9;      // candle width px
+let GAP      = 2;      // gap between candles
+let CHART_H  = 200;    // canvas height px
+const YPAD   = 10;     // vertical padding inside chart
+const YAXIS_W= 64;     // y-axis panel width px
 
-// Per-instrument data
+let histDate  = null;
+let pollTimer = null;
+
 const D = {};
 INSTRUMENTS.forEach(inst => {
   D[inst.token] = {
-    candles:    [],   // sealed 1-min candles (aggregated to ivMin on draw)
-    liveC:      null, // forming candle from server
-    sessionOpen:null,
-    ltp:        null,
-    prevLtp:    null,
-    orbHigh:    null,
-    orbLow:     null,
-    _render:    null, // saved render info for tooltip
+    candles: [], liveC: null,
+    sessionOpen: null, prevClose: null,
+    ltp: null, prevLtp: null,
+    orbHigh: null, orbLow: null,
+    _render: null,
   };
 });
+const histD = {};
+const prevLiveBucket = {};
+
+// ── SIZE CONTROLS ─────────────────────────────────────────────────────────────
+function setCW(v) {
+  CW = v;
+  document.getElementById('cw-val').textContent = v;
+  redrawAll();
+}
+function setCH(v) {
+  CHART_H = v;
+  document.getElementById('ch-val').textContent = v;
+  // Resize all chart-outer containers
+  INSTRUMENTS.forEach(inst => {
+    const outer = document.getElementById(`outer-${inst.id}`);
+    if (outer) outer.style.height = v + 'px';
+  });
+  redrawAll();
+}
+function redrawAll() {
+  if (histDate) {
+    INSTRUMENTS.forEach(inst => {
+      const hd = histD[inst.token];
+      if (hd) drawHistChart(inst, hd.candles, { high: hd.orbHigh, low: hd.orbLow });
+    });
+  } else {
+    INSTRUMENTS.forEach(inst => drawChart(inst, true));
+  }
+}
 
 // ── DOM BUILD ─────────────────────────────────────────────────────────────────
 function buildCards() {
@@ -177,7 +219,11 @@ function buildCards() {
           </div>
           <div class="ch-right">
             <div class="ch-ltp fl" id="ltp-${inst.id}">–</div>
-            <div class="ch-chg fl" id="chg-${inst.id}">–</div>
+            <div class="ch-badges">
+              <div class="ch-chg fl" id="chg-${inst.id}">–</div>
+              <div class="ch-chg fl" id="chg-abs-${inst.id}">–</div>
+              <div class="ch-prev" id="prev-${inst.id}"></div>
+            </div>
           </div>
         </div>
         <div class="ohlc" id="ohlc-${inst.id}">
@@ -191,56 +237,84 @@ function buildCards() {
           <span>H <b id="orbH-${inst.id}" style="color:#f6c90e">–</b></span>
           <span>L <b id="orbL-${inst.id}" style="color:#f6c90e">–</b></span>
         </div>
-        <div class="cv-wrap" id="wrap-${inst.id}">
-          <div class="no-data" id="nd-${inst.id}">Waiting for data…</div>
-          <canvas id="cv-${inst.id}" style="display:none"></canvas>
+        <div class="chart-outer" id="outer-${inst.id}" style="height:${CHART_H}px">
+          <div class="yaxis-panel" id="yp-${inst.id}">
+            <canvas id="yc-${inst.id}"></canvas>
+          </div>
+          <div class="scroll-area" id="sa-${inst.id}">
+            <div class="no-data" id="nd-${inst.id}" style="height:100%;width:100%">Waiting for data…</div>
+            <div class="candle-canvas-wrap" id="cw-wrap-${inst.id}" style="display:none;height:100%">
+              <canvas id="cv-${inst.id}"></canvas>
+              <div class="crosshair" id="xhair-${inst.id}"></div>
+            </div>
+          </div>
         </div>
       </div>
     `);
-    const wrapEl = document.getElementById(`wrap-${inst.id}`);
-    wrapEl.addEventListener('mousemove', e => onHover(e, inst));
-    wrapEl.addEventListener('mouseleave', hideTip);
+
+    // Mouse events
+    const sa = document.getElementById(`sa-${inst.id}`);
+    sa.addEventListener('mousemove', e => onHover(e, inst));
+    sa.addEventListener('mouseleave', () => { hideTip(); hideXhair(inst); });
   });
 }
 
 // ── CANDLE AGGREGATION ────────────────────────────────────────────────────────
-// Aggregate raw 1-min candles into ivMin-minute candles
-function aggregate(rawCandles, ivM) {
-  if (!ivM || ivM <= 1) return rawCandles.map(c => ({ ...c }));
+function aggregate(raw, ivM) {
+  if (!ivM || ivM <= 1) return raw.map(c => ({ ...c }));
   const out = [];
-  rawCandles.forEach(c => {
-    // Floor ts to ivM-minute bucket
+  raw.forEach(c => {
     const bucket = Math.floor(c.ts / (ivM * 60)) * (ivM * 60);
     if (!out.length || out[out.length-1].ts !== bucket) {
       out.push({ ts:bucket, time_label:c.time_label, open:c.open, high:c.high, low:c.low, close:c.close });
     } else {
       const last = out[out.length-1];
       last.high  = Math.max(last.high, c.high);
-      last.low   = Math.min(last.low,  c.low);
+      last.low   = Math.min(last.low, c.low);
       last.close = c.close;
     }
   });
   return out;
 }
 
-// ── ORB CALCULATION (first 15 minutes = 15 raw 1-min candles) ────────────────
-function calcORB(rawCandles) {
-  const ORB_MINS = 15;
-  if (!rawCandles.length) return { high: null, low: null };
-  // Market open is 09:15 IST; take first ORB_MINS candles
-  const orbSlice = rawCandles.slice(0, ORB_MINS);
-  const high = Math.max(...orbSlice.map(c => c.high));
-  const low  = Math.min(...orbSlice.map(c => c.low));
-  return { high, low };
+function calcORB(raw) {
+  if (!raw.length) return { high: null, low: null };
+  const sl = raw.slice(0, 15);
+  return { high: Math.max(...sl.map(c=>c.high)), low: Math.min(...sl.map(c=>c.low)) };
 }
 
-// ── LIVE TICK INGEST ──────────────────────────────────────────────────────────
+// ── PREV CLOSE (yesterday's last candle close) ────────────────────────────────
+// We fetch yesterday's data to get prev close. Called once on boot.
+async function fetchPrevClose() {
+  // Get list of available dates, pick the last one before today
+  try {
+    const res  = await fetch(`${API}/index-dates`);
+    const data = await res.json();
+    const today = nowISTDate();
+    const dates = (data.dates || []).filter(d => d < today);
+    if (!dates.length) return;
+    const prevDate = dates[0]; // most recent past date
+    const res2 = await fetch(`${API}/index-candles?date=${prevDate}`);
+    const data2 = await res2.json();
+    INSTRUMENTS.forEach(inst => {
+      const rows = data2.candles?.[inst.token] || [];
+      if (rows.length) D[inst.token].prevClose = rows[rows.length-1].close;
+    });
+  } catch(e) { /* no prev close available */ }
+}
+
+function nowISTDate() {
+  const now = new Date();
+  const ist = new Date(now.getTime() + 5.5*3600000);
+  return ist.toISOString().slice(0,10);
+}
+
+// ── LIVE INGEST ───────────────────────────────────────────────────────────────
 function ingestLiveTick(token, ltp, ts, serverLiveCandle) {
   const d = D[token];
   if (d.sessionOpen == null) d.sessionOpen = ltp;
   d.prevLtp = d.ltp;
   d.ltp     = ltp;
-  // Use server-provided live candle (already has correct OHLC)
   if (serverLiveCandle && serverLiveCandle.start_ts != null) {
     d.liveC = {
       ts:         serverLiveCandle.start_ts,
@@ -253,24 +327,40 @@ function ingestLiveTick(token, ltp, ts, serverLiveCandle) {
   }
 }
 
+function maybeAccumulateLiveCandle(token) {
+  const d  = D[token];
+  const lc = d.liveC;
+  if (!lc) return;
+  const prev = prevLiveBucket[token];
+  if (prev != null && lc.ts !== prev) {
+    const candles = d.candles;
+    if ((!candles.length || candles[candles.length-1].ts !== prev) && D[token]._prevLiveC) {
+      candles.push({ ...D[token]._prevLiveC });
+      if (candles.length === 15) {
+        const orb = calcORB(candles);
+        D[token].orbHigh = orb.high; D[token].orbLow = orb.low;
+      }
+    }
+  }
+  D[token]._prevLiveC    = { ...lc };
+  prevLiveBucket[token]  = lc.ts;
+}
+
 // ── POLLING ───────────────────────────────────────────────────────────────────
 async function fetchLive() {
   try {
     const res  = await fetch(`${API}/index-ltp`);
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
-
     document.getElementById('as-of').textContent = data.as_of || '--';
     document.getElementById('pulse').classList.add('live');
-
     INSTRUMENTS.forEach(inst => {
       const tick = data.ticks?.[inst.token];
       const lc   = data.live_candles?.[inst.token];
       if (!tick || tick.ltp == null) return;
       ingestLiveTick(inst.token, tick.ltp, tick.ts, lc);
-      // Always accumulate sealed candles for when user returns to live view
       maybeAccumulateLiveCandle(inst.token);
-      if (histDate) return;   // historical mode — don't repaint
+      if (histDate) return;
       updateLtpUI(inst);
       updateOhlcUI(inst);
       drawChart(inst, true);
@@ -281,28 +371,55 @@ async function fetchLive() {
 }
 
 async function fetchHistorical(dateStr) {
+  INSTRUMENTS.forEach(inst => {
+    document.getElementById(`nd-${inst.id}`).textContent = 'Fetching data…';
+    document.getElementById(`nd-${inst.id}`).style.display = 'flex';
+    document.getElementById(`cw-wrap-${inst.id}`).style.display = 'none';
+  });
   try {
     const res  = await fetch(`${API}/index-candles?date=${dateStr}`);
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
+    if (data.error) {
+      INSTRUMENTS.forEach(inst => { document.getElementById(`nd-${inst.id}`).textContent = '⚠ ' + data.error; });
+      return;
+    }
+    if (data.source === 'kite_api') fetchDates();
     INSTRUMENTS.forEach(inst => {
       const rows = data.candles?.[inst.token] || [];
-      D[inst.token].candles    = rows;
-      D[inst.token].liveC      = null;
-      D[inst.token].ltp        = rows.length ? rows[rows.length-1].close : null;
-      D[inst.token].sessionOpen= rows.length ? rows[0].open : null;
-      const orb = calcORB(rows);
-      D[inst.token].orbHigh = orb.high;
-      D[inst.token].orbLow  = orb.low;
-      updateLtpUI(inst);
-      updateOhlcUI(inst);
-      drawChart(inst, false);
+      const orb  = calcORB(rows);
+      histD[inst.token] = { candles: rows, orbHigh: orb.high, orbLow: orb.low };
+      if (!rows.length) {
+        document.getElementById(`nd-${inst.id}`).textContent = 'No data for this date';
+        return;
+      }
+      // prev close = last candle of the day before in histD
+      const last = rows[rows.length-1];
+      drawHistChart(inst, rows, orb);
+      const el = document.getElementById(`ltp-${inst.id}`);
+      if (last) { el.textContent = fmt(last.close); el.className = 'ch-ltp fl'; }
+      updateOhlcHistUI(inst, last);
+      // Show change vs first candle open of this day
+      updateHistChg(inst, rows);
+      document.getElementById(`meta-${inst.id}`).textContent =
+        `${ivMin}m · ${rows.length} candles · ${dateStr}` + (data.source==='kite_api' ? ' · Kite API' : '');
     });
-
   } catch(e) {
-    console.error('History fetch error:', e);
+    INSTRUMENTS.forEach(inst => { document.getElementById(`nd-${inst.id}`).textContent = 'Error: ' + e.message; });
   }
+}
+
+function updateHistChg(inst, rows) {
+  if (!rows.length) return;
+  const open = rows[0].open;
+  const close= rows[rows.length-1].close;
+  const diff = close - open;
+  const pct  = (diff / open * 100).toFixed(2);
+  const cls  = diff > 0 ? 'up' : diff < 0 ? 'dn' : 'fl';
+  document.getElementById(`chg-${inst.id}`).textContent    = (diff>0?'+':'')+pct+'%';
+  document.getElementById(`chg-${inst.id}`).className      = 'ch-chg '+cls;
+  document.getElementById(`chg-abs-${inst.id}`).textContent= (diff>0?'+':'')+fmt(diff);
+  document.getElementById(`chg-abs-${inst.id}`).className  = 'ch-chg '+cls;
+  document.getElementById(`prev-${inst.id}`).textContent   = 'vs open '+fmt(open);
 }
 
 async function fetchDates() {
@@ -310,128 +427,14 @@ async function fetchDates() {
     const res  = await fetch(`${API}/index-dates`);
     const data = await res.json();
     const sel  = document.getElementById('date-sel');
+    // Remove old dynamic options
+    [...sel.options].forEach(o => { if (o.value !== 'live') o.remove(); });
     (data.dates || []).forEach(d => {
-      const opt  = document.createElement('option');
-      opt.value  = d;
-      opt.textContent = d;
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
       sel.appendChild(opt);
     });
-  } catch(e) { /* no dates yet */ }
-}
-
-// ── MODE SWITCHING ────────────────────────────────────────────────────────────
-// Live polling ALWAYS runs. In historical mode we just render a snapshot instead.
-
-function onDateChange(val) {
-  if (val === 'live') { goLive(); return; }
-  histDate = val;  // set display mode to historical
-  document.getElementById('live-btn').style.display = 'inline-block';
-  document.getElementById('mode-label').textContent = 'HIST';
-  document.getElementById('as-of').textContent = val;
-  fetchHistorical(val);
-  // Live poll keeps running silently — D[token] state stays current
-}
-
-function goLive() {
-  histDate = null;
-  document.getElementById('live-btn').style.display = 'none';
-  document.getElementById('date-sel').value = 'live';
-  document.getElementById('date-input').value = '';
-  document.getElementById('mode-label').textContent = 'LIVE';
-  // Redraw all charts using the already-accumulated live data instantly
-  INSTRUMENTS.forEach(inst => {
-    updateLtpUI(inst);
-    updateOhlcUI(inst);
-    drawChart(inst, true);
-  });
-}
-
-// Historical view uses its own separate display buffers so live D[token] is untouched
-const histD = {};   // { token: { candles, orbHigh, orbLow } }
-
-async function fetchHistorical(dateStr) {
-  // Show loading state on all charts
-  INSTRUMENTS.forEach(inst => {
-    document.getElementById(`nd-${inst.id}`).textContent = 'Fetching data…';
-    document.getElementById(`nd-${inst.id}`).style.display = 'flex';
-    document.getElementById(`cv-${inst.id}`).style.display = 'none';
-  });
-
-  try {
-    const res  = await fetch(`${API}/index-candles?date=${dateStr}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    // If server fetched from Kite API (not DB), update the dates dropdown
-    if (data.source === 'kite_api') fetchDates();
-
-    INSTRUMENTS.forEach(inst => {
-      const rows = data.candles?.[inst.token] || [];
-      const orb  = calcORB(rows);
-      histD[inst.token] = { candles: rows, orbHigh: orb.high, orbLow: orb.low };
-
-      if (!rows.length) {
-        document.getElementById(`nd-${inst.id}`).textContent = 'No data for this date';
-        document.getElementById(`nd-${inst.id}`).style.display = 'flex';
-        document.getElementById(`cv-${inst.id}`).style.display = 'none';
-        return;
-      }
-
-      drawHistChart(inst, rows, orb);
-      const last = rows[rows.length - 1];
-      const el   = document.getElementById(`ltp-${inst.id}`);
-      if (last) { el.textContent = fmt(last.close); el.className = 'ch-ltp fl'; }
-      updateOhlcHistUI(inst, last);
-      document.getElementById(`meta-${inst.id}`).textContent =
-        `${ivMin}m · ${rows.length} candles · ${dateStr}` + (data.source === 'kite_api' ? ' · via Kite API' : '');
-    });
-  } catch(e) {
-    INSTRUMENTS.forEach(inst => {
-      document.getElementById(`nd-${inst.id}`).textContent = 'Error: ' + e.message;
-    });
-    console.error('History fetch error:', e);
-  }
-}
-
-function drawHistChart(inst, rows, orb) {
-  // Temporarily swap D[token] to render historical data, then restore
-  const saved = {
-    candles: D[inst.token].candles,
-    liveC:   D[inst.token].liveC,
-    orbHigh: D[inst.token].orbHigh,
-    orbLow:  D[inst.token].orbLow,
-  };
-  D[inst.token].candles = rows;
-  D[inst.token].liveC   = null;
-  D[inst.token].orbHigh = orb.high;
-  D[inst.token].orbLow  = orb.low;
-  drawChart(inst, false);
-  D[inst.token].candles = saved.candles;
-  D[inst.token].liveC   = saved.liveC;
-  D[inst.token].orbHigh = saved.orbHigh;
-  D[inst.token].orbLow  = saved.orbLow;
-}
-
-function updateOhlcHistUI(inst, candle) {
-  if (!candle) return;
-  ['o','h','l','c'].forEach((k, i) => {
-    const key = ['open','high','low','close'][i];
-    document.getElementById(`${k}-${inst.id}`).textContent = fmt(candle[key]);
-  });
-}
-
-function setIv(min, btn) {
-  ivMin = min;
-  document.querySelectorAll('.iv-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (histDate) {
-    INSTRUMENTS.forEach(inst => {
-      const hd = histD[inst.token];
-      if (hd) drawHistChart(inst, hd.candles, { high: hd.orbHigh, low: hd.orbLow });
-    });
-  } else {
-    INSTRUMENTS.forEach(inst => drawChart(inst, true));
-  }
+  } catch(e) {}
 }
 
 function startPoll() {
@@ -440,163 +443,184 @@ function startPoll() {
   pollTimer = setInterval(fetchLive, POLL);
 }
 
-// ── LIVE CANDLE STORAGE (from server live_candles, seal when minute changes) ──
-// For live mode we also need to accumulate sealed candles.
-// We detect a sealed candle when the live candle's start_ts changes.
-const prevLiveBucket = {};
-
-function maybeAccumulateLiveCandle(token) {
-  const d   = D[token];
-  const lc  = d.liveC;
-  if (!lc) return;
-  const prev = prevLiveBucket[token];
-  if (prev != null && lc.ts !== prev) {
-    // A new bucket opened — the previous candle is now sealed
-    // Push it only if not already stored
-    const candles = d.candles;
-    if (!candles.length || candles[candles.length-1].ts !== prev) {
-      // Reconstruct the sealed candle from the transition
-      // (server already moved to new bucket, old values gone — we cached them)
-      if (D[token]._prevLiveC) {
-        candles.push({ ...D[token]._prevLiveC });
-        // Recalculate ORB when we have enough candles
-        if (candles.length === 15) {
-          const orb = calcORB(candles);
-          D[token].orbHigh = orb.high;
-          D[token].orbLow  = orb.low;
-        }
-      }
-    }
-  }
-  D[token]._prevLiveC = { ...lc, ts: lc.ts };
-  prevLiveBucket[token] = lc.ts;
+// ── MODE SWITCHING ────────────────────────────────────────────────────────────
+function onDateChange(val) {
+  if (val === 'live' || !val) { goLive(); return; }
+  histDate = val;
+  document.getElementById('live-btn').style.display = 'inline-block';
+  document.getElementById('mode-label').textContent = 'HIST';
+  document.getElementById('as-of').textContent = val;
+  fetchHistorical(val);
 }
 
-// Hook into drawChart to accumulate
-const _origDraw = window._draw;
+function goLive() {
+  histDate = null;
+  document.getElementById('live-btn').style.display = 'none';
+  document.getElementById('date-sel').value = 'live';
+  document.getElementById('date-input').value = '';
+  document.getElementById('mode-label').textContent = 'LIVE';
+  INSTRUMENTS.forEach(inst => { updateLtpUI(inst); updateOhlcUI(inst); drawChart(inst, true); });
+}
+
+function setIv(min, btn) {
+  ivMin = min;
+  document.querySelectorAll('.xbtn').forEach(b => { if (['1m','3m','5m'].includes(b.textContent)) b.classList.remove('active'); });
+  btn.classList.add('active');
+  redrawAll();
+}
 
 // ── DRAW ENGINE ───────────────────────────────────────────────────────────────
-const CW  = 9;    // candle body width px
-const GAP = 2;    // gap between candles
-const YPAD = 10;  // px padding top & bottom inside chart
-
 function drawChart(inst, live) {
-  if (live) maybeAccumulateLiveCandle(inst.token);
-
-  const d      = D[inst.token];
-  const raw    = [...d.candles, ...(d.liveC && live ? [d.liveC] : [])];
-  const all    = aggregate(raw, ivMin);
+  const d   = D[inst.token];
+  const raw = [...d.candles, ...(d.liveC && live ? [d.liveC] : [])];
+  const all = aggregate(raw, ivMin);
   const isLast = live && d.liveC != null;
+  _render(inst, all, isLast, d.orbHigh, d.orbLow, live);
+}
 
-  const nd = document.getElementById(`nd-${inst.id}`);
-  const cv = document.getElementById(`cv-${inst.id}`);
+function drawHistChart(inst, rows, orb) {
+  const all = aggregate(rows, ivMin);
+  _render(inst, all, false, orb.high, orb.low, false);
+}
 
-  if (!all.length) { nd.style.display='flex'; cv.style.display='none'; return; }
-  nd.style.display = 'none'; cv.style.display = 'block';
+function _render(inst, all, isLast, orbHigh, orbLow, live) {
+  const nd     = document.getElementById(`nd-${inst.id}`);
+  const cwWrap = document.getElementById(`cw-wrap-${inst.id}`);
 
-  const wrapEl = document.getElementById(`wrap-${inst.id}`);
-  const W = wrapEl.clientWidth - 48;
-  const H = wrapEl.clientHeight - 12;
-  const dpr = window.devicePixelRatio || 1;
-  cv.width  = W * dpr;
+  if (!all.length) {
+    nd.style.display = 'flex'; cwWrap.style.display = 'none'; return;
+  }
+  nd.style.display = 'none'; cwWrap.style.display = 'block';
+
+  const outerEl = document.getElementById(`outer-${inst.id}`);
+  const H       = outerEl.clientHeight || CHART_H;
+  const dpr     = window.devicePixelRatio || 1;
+
+  // ── Canvas dimensions ──
+  const totalCandleW = all.length * (CW + GAP) + GAP + 20; // +20 right padding
+  const cv  = document.getElementById(`cv-${inst.id}`);
+  cv.width  = totalCandleW * dpr;
   cv.height = H * dpr;
+  cv.style.width  = totalCandleW + 'px';
+  cv.style.height = H + 'px';
+  cwWrap.style.width = totalCandleW + 'px';
+
+  // Auto-scroll to right on live
+  const sa = document.getElementById(`sa-${inst.id}`);
+  const wasAtEnd = sa.scrollLeft + sa.clientWidth >= sa.scrollWidth - 20;
+  if (live && wasAtEnd) setTimeout(() => { sa.scrollLeft = sa.scrollWidth; }, 0);
+
   const ctx = cv.getContext('2d');
   ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
+  ctx.clearRect(0, 0, totalCandleW, H);
 
   // ── Price range ──
   let hi = -Infinity, lo = Infinity;
   all.forEach(c => { hi = Math.max(hi, c.high); lo = Math.min(lo, c.low); });
-
-  // Include ORB in range so lines always visible
-  if (d.orbHigh != null) hi = Math.max(hi, d.orbHigh);
-  if (d.orbLow  != null) lo = Math.min(lo, d.orbLow);
-
+  if (orbHigh != null) hi = Math.max(hi, orbHigh);
+  if (orbLow  != null) lo = Math.min(lo, orbLow);
   const pad = (hi - lo) * 0.1 || hi * 0.002 || 1;
   hi += pad; lo -= pad;
   const range = hi - lo || 1;
   const toY = v => YPAD + ((hi - v) / range) * (H - YPAD * 2);
 
-  // ── Grid + Y-axis ──
-  ctx.font = `${9 * dpr}px JetBrains Mono,monospace`;
-  ctx.textAlign = 'right';
-  const steps = 4;
+  // ── Grid lines (horizontal, span full canvas) ──
+  const steps = 5;
+  ctx.strokeStyle = '#1a1e2c'; ctx.lineWidth = 0.5;
   for (let i = 0; i <= steps; i++) {
     const v = lo + (hi - lo) * (i / steps);
     const y = toY(v);
-    ctx.strokeStyle = '#1a1e2c'; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    ctx.fillStyle = '#3d4460';
-    ctx.fillText(fmt(v), -4, y + 3);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(totalCandleW, y); ctx.stroke();
   }
 
-  // ── ORB dashed lines ──
-  if (d.orbHigh != null && d.orbLow != null) {
-    const yH = toY(d.orbHigh);
-    const yL = toY(d.orbLow);
+  // ── Time labels (every N candles) ──
+  const labelEvery = Math.max(1, Math.ceil(60 / (CW + GAP)));
+  ctx.font = `${8 * dpr}px JetBrains Mono,monospace`;
+  ctx.fillStyle = '#3d4460'; ctx.textAlign = 'center';
+  all.forEach((c, i) => {
+    if (i % labelEvery !== 0) return;
+    const x = i * (CW + GAP) + GAP + CW / 2;
+    ctx.fillText(c.time_label, x, H - 2);
+  });
 
+  // ── ORB lines ──
+  if (orbHigh != null && orbLow != null) {
+    const yH = toY(orbHigh), yL = toY(orbLow);
     ctx.save();
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = '#f6c90e';
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.75;
-    ctx.beginPath(); ctx.moveTo(0, yH); ctx.lineTo(W, yH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, yL); ctx.lineTo(W, yL); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-
-    // ORB value labels pinned to the right edge
+    ctx.setLineDash([5,5]); ctx.strokeStyle = '#f6c90e'; ctx.lineWidth = 1; ctx.globalAlpha = 0.75;
+    ctx.beginPath(); ctx.moveTo(0,yH); ctx.lineTo(totalCandleW,yH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,yL); ctx.lineTo(totalCandleW,yL); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+    // ORB labels on the right
     ctx.save();
-    ctx.font = `${9 * dpr}px JetBrains Mono,monospace`;
-    ctx.fillStyle = '#f6c90e';
-    ctx.globalAlpha = 0.85;
-    ctx.textAlign = 'right';
-    ctx.fillText('ORB H ' + fmt(d.orbHigh), W - 2, yH - 3);
-    ctx.fillText('ORB L ' + fmt(d.orbLow),  W - 2, yL + 10);
+    ctx.font = `${8*dpr}px JetBrains Mono,monospace`;
+    ctx.fillStyle='#f6c90e'; ctx.globalAlpha=0.85; ctx.textAlign='right';
+    ctx.fillText('ORB H '+fmt(orbHigh), totalCandleW-3, yH-3);
+    ctx.fillText('ORB L '+fmt(orbLow),  totalCandleW-3, yL+10);
     ctx.restore();
-
     // Update ORB strip
-    const strip = document.getElementById(`orb-${inst.id}`);
-    strip.style.display = 'flex';
-    document.getElementById(`orbH-${inst.id}`).textContent = fmt(d.orbHigh);
-    document.getElementById(`orbL-${inst.id}`).textContent = fmt(d.orbLow);
+    document.getElementById(`orb-${inst.id}`).style.display = 'flex';
+    document.getElementById(`orbH-${inst.id}`).textContent = fmt(orbHigh);
+    document.getElementById(`orbL-${inst.id}`).textContent = fmt(orbLow);
   }
 
   // ── Candles ──
-  const totalW = all.length * (CW + GAP);
-  const startX = Math.max(0, totalW - W);
-
-  ctx.textAlign = 'right';
   all.forEach((c, i) => {
-    const x = i * (CW + GAP) - startX + GAP;
-    if (x + CW < 0 || x > W) return;
-
+    const x      = i * (CW + GAP) + GAP;
     const isLive = isLast && i === all.length - 1;
     const isUp   = c.close >= c.open;
     const col    = isUp ? inst.color : '#f0415a';
-
-    const bodyTop = toY(Math.max(c.open, c.close));
-    const bodyBot = toY(Math.min(c.open, c.close));
-    const bodyH   = Math.max(1, bodyBot - bodyTop);
-
+    const bodyTop= toY(Math.max(c.open, c.close));
+    const bodyBot= toY(Math.min(c.open, c.close));
+    const bodyH  = Math.max(1, bodyBot - bodyTop);
     // Wick
-    ctx.strokeStyle = isLive ? col + '66' : '#2e3450';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x + CW/2, toY(c.high));
-    ctx.lineTo(x + CW/2, toY(c.low));
-    ctx.stroke();
-
+    ctx.strokeStyle = isLive ? col+'66' : '#2e3450'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x+CW/2, toY(c.high)); ctx.lineTo(x+CW/2, toY(c.low)); ctx.stroke();
     // Body
-    ctx.fillStyle = isLive ? col + '55' : col;
+    ctx.fillStyle = isLive ? col+'55' : col;
     ctx.fillRect(x, bodyTop, CW, bodyH);
-    if (isLive) {
-      ctx.strokeStyle = col; ctx.lineWidth = 1;
-      ctx.strokeRect(x, bodyTop, CW, bodyH);
-    }
+    if (isLive) { ctx.strokeStyle=col; ctx.lineWidth=1; ctx.strokeRect(x,bodyTop,CW,bodyH); }
   });
 
-  d._render = { all, startX, W, H };
+  // ── Draw Y-axis (fixed panel) ──
+  _drawYAxis(inst, hi, lo, H, steps, orbHigh, orbLow);
+
+  // Store render info
+  D[inst.token]._render = { all, totalCandleW, hi, lo, H };
+}
+
+function _drawYAxis(inst, hi, lo, H, steps, orbHigh, orbLow) {
+  const yc  = document.getElementById(`yc-${inst.id}`);
+  const dpr = window.devicePixelRatio || 1;
+  yc.width  = YAXIS_W * dpr;
+  yc.height = H * dpr;
+  yc.style.width  = YAXIS_W + 'px';
+  yc.style.height = H + 'px';
+  const ctx   = yc.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, YAXIS_W, H);
+  const range = hi - lo || 1;
+  const toY   = v => YPAD + ((hi - v) / range) * (H - YPAD * 2);
+  ctx.font     = `${9*dpr}px JetBrains Mono,monospace`;
+  ctx.textAlign= 'right';
+  for (let i = 0; i <= steps; i++) {
+    const v = lo + (hi - lo) * (i / steps);
+    const y = toY(v);
+    ctx.fillStyle = '#3d4460';
+    ctx.fillText(fmt(v), YAXIS_W - 4, y + 3.5);
+  }
+  // ORB price labels on y-axis
+  if (orbHigh != null) {
+    ctx.fillStyle = '#f6c90e';
+    ctx.fillText(fmt(orbHigh), YAXIS_W-4, toY(orbHigh)-4);
+  }
+  if (orbLow != null) {
+    ctx.fillStyle = '#f6c90e';
+    ctx.fillText(fmt(orbLow), YAXIS_W-4, toY(orbLow)+11);
+  }
+  // Separator line
+  ctx.strokeStyle = '#1f2333'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(YAXIS_W-0.5, 0); ctx.lineTo(YAXIS_W-0.5, H); ctx.stroke();
 }
 
 // ── LTP / OHLC UI ─────────────────────────────────────────────────────────────
@@ -604,19 +628,26 @@ function updateLtpUI(inst) {
   const d   = D[inst.token];
   const el  = document.getElementById(`ltp-${inst.id}`);
   const el2 = document.getElementById(`chg-${inst.id}`);
+  const el3 = document.getElementById(`chg-abs-${inst.id}`);
+  const el4 = document.getElementById(`prev-${inst.id}`);
   if (d.ltp == null) return;
 
   const dir = d.prevLtp == null ? 'fl' : d.ltp > d.prevLtp ? 'up' : d.ltp < d.prevLtp ? 'dn' : 'fl';
-  el.textContent  = fmt(d.ltp);
-  el.className    = `ch-ltp ${dir}`;
-  setTimeout(() => { el.className = `ch-ltp fl`; }, 400);
+  el.textContent = fmt(d.ltp);
+  el.className   = `ch-ltp ${dir}`;
+  setTimeout(() => { el.className = 'ch-ltp fl'; }, 400);
 
-  if (d.sessionOpen) {
-    const diff = d.ltp - d.sessionOpen;
-    const pct  = (diff / d.sessionOpen * 100).toFixed(2);
+  // Change vs prev close (from yesterday)
+  const base = d.prevClose ?? d.sessionOpen;
+  if (base != null) {
+    const diff = d.ltp - base;
+    const pct  = (diff / base * 100).toFixed(2);
     const cls  = diff > 0 ? 'up' : diff < 0 ? 'dn' : 'fl';
-    el2.textContent = (diff > 0 ? '+' : '') + pct + '%';
-    el2.className   = `ch-chg ${cls}`;
+    el2.textContent = (diff>0?'+':'')+pct+'%';
+    el2.className   = 'ch-chg '+cls;
+    el3.textContent = (diff>0?'+':'')+fmt(diff);
+    el3.className   = 'ch-chg '+cls;
+    el4.textContent = d.prevClose != null ? 'vs prev ' + fmt(d.prevClose) : 'vs open ' + fmt(d.sessionOpen);
   }
 }
 
@@ -625,49 +656,62 @@ function updateOhlcUI(inst) {
   const c = d.liveC || (d.candles.length ? d.candles[d.candles.length-1] : null);
   if (!c) return;
   ['o','h','l','c'].forEach((k, i) => {
-    const key = ['open','high','low','close'][i];
-    document.getElementById(`${k}-${inst.id}`).textContent = fmt(c[key]);
+    document.getElementById(`${k}-${inst.id}`).textContent = fmt(c[['open','high','low','close'][i]]);
   });
   document.getElementById(`meta-${inst.id}`).textContent =
     `${ivMin}m · ${d.candles.length + (d.liveC ? 1 : 0)} candles`;
 }
 
-// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+function updateOhlcHistUI(inst, candle) {
+  if (!candle) return;
+  ['o','h','l','c'].forEach((k, i) => {
+    document.getElementById(`${k}-${inst.id}`).textContent = fmt(candle[['open','high','low','close'][i]]);
+  });
+}
+
+// ── TOOLTIP + CROSSHAIR ───────────────────────────────────────────────────────
 function onHover(e, inst) {
   const d = D[inst.token];
   if (!d._render) return;
-  const { all, startX } = d._render;
+  const { all } = d._render;
+  const sa   = document.getElementById(`sa-${inst.id}`);
   const cv   = document.getElementById(`cv-${inst.id}`);
-  const rect = cv.getBoundingClientRect();
-  const mx   = e.clientX - rect.left;
-  const idx  = Math.floor((mx + startX - GAP) / (CW + GAP));
-  if (idx < 0 || idx >= all.length) { hideTip(); return; }
-  const c   = all[idx];
-  const dir = c.close >= c.open ? '#00d68f' : '#f0415a';
-  const pct = ((c.close - c.open) / c.open * 100).toFixed(2);
-  const tip = document.getElementById('tip');
+  const rect = sa.getBoundingClientRect();
+  const mx   = e.clientX - rect.left + sa.scrollLeft;
+  const idx  = Math.floor((mx - GAP) / (CW + GAP));
+  if (idx < 0 || idx >= all.length) { hideTip(); hideXhair(inst); return; }
+  const c    = all[idx];
+  const xPos = idx * (CW + GAP) + GAP + CW/2 - sa.scrollLeft;
+  // Crosshair
+  const xhair = document.getElementById(`xhair-${inst.id}`);
+  xhair.style.display = 'block';
+  xhair.style.left    = xPos + 'px';
+  xhair.style.height  = '100%';
+  // Tooltip
+  const dir  = c.close >= c.open ? '#00d68f' : '#f0415a';
+  const pct  = ((c.close - c.open)/c.open*100).toFixed(2);
+  const tip  = document.getElementById('tip');
   tip.innerHTML = `
     <div class="tl">${c.time_label} · ${inst.label}</div>
     <div>O <b style="color:#dde3f0">${fmt(c.open)}</b> &nbsp; H <b style="color:#00d68f">${fmt(c.high)}</b></div>
     <div>L <b style="color:#f0415a">${fmt(c.low)}</b> &nbsp; C <b style="color:${dir}">${fmt(c.close)}</b></div>
-    <div style="color:${dir}">${pct}%</div>
+    <div style="color:${dir}">${c.close>=c.open?'+':''}${pct}%</div>
   `;
   tip.style.left = (e.clientX + 14) + 'px';
   tip.style.top  = (e.clientY - 16) + 'px';
   tip.classList.add('show');
 }
-function hideTip() { document.getElementById('tip').classList.remove('show'); }
+function hideTip()         { document.getElementById('tip').classList.remove('show'); }
+function hideXhair(inst)   { const x = document.getElementById(`xhair-${inst.id}`); if(x) x.style.display='none'; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function fmt(v) {
   if (v == null || isNaN(v)) return '–';
-  return v >= 1000
-    ? v.toLocaleString('en-IN', { maximumFractionDigits: 2 })
-    : v.toFixed(2);
+  return v >= 1000 ? v.toLocaleString('en-IN',{maximumFractionDigits:2}) : v.toFixed(2);
 }
 function fmtTS(ts) {
-  const d = new Date(ts * 1000);
-  const ist = new Date(d.getTime() + (5.5 * 3600000));
+  const d   = new Date(ts * 1000);
+  const ist = new Date(d.getTime() + 5.5*3600000);
   return ist.getUTCHours().toString().padStart(2,'0') + ':' + ist.getUTCMinutes().toString().padStart(2,'0');
 }
 
@@ -675,21 +719,13 @@ function fmtTS(ts) {
 let rzTimer;
 window.addEventListener('resize', () => {
   clearTimeout(rzTimer);
-  rzTimer = setTimeout(() => {
-    if (histDate) {
-      INSTRUMENTS.forEach(inst => {
-        const hd = histD[inst.token];
-        if (hd) drawHistChart(inst, hd.candles, { high: hd.orbHigh, low: hd.orbLow });
-      });
-    } else {
-      INSTRUMENTS.forEach(inst => drawChart(inst, true));
-    }
-  }, 200);
+  rzTimer = setTimeout(redrawAll, 200);
 });
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 buildCards();
 fetchDates();
+fetchPrevClose();
 startPoll();
 </script>
 </body>
