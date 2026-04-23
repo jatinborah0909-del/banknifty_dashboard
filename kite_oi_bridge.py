@@ -1,9 +1,8 @@
 """
 Nifty OI Bias Monitor — Kite WebSocket Bridge (Railway / PostgreSQL edition)
 =============================================================================
-Identical behaviour to the local CSV version, but:
   • Data is stored in PostgreSQL (DATABASE_URL from Railway env)
-  • Flask also serves index.html at GET /
+  • Flask serves index.html at GET / and charts.html at GET /charts
   • API_KEY / ACCESS_TOKEN come from environment variables (never hard-coded)
 
 Railway setup
@@ -14,8 +13,9 @@ Railway setup
         KITE_ACCESS_TOKEN
 3.  Deploy from GitHub — Railway will run:  python kite_oi_bridge.py
 
-Endpoints (unchanged):
-    GET  /                 → serves the dashboard HTML
+Endpoints:
+    GET  /                 → serves the OI dashboard HTML
+    GET  /charts           → serves the index charts HTML
     GET  /oi               → snapshot for ALL 11 strikes + active bear/bull
     GET  /ltp              → live LTP for all 22 tokens
     GET  /oi/history       → 1-min rows for today (all 11 strikes + OHLC)
@@ -23,9 +23,13 @@ Endpoints (unchanged):
     GET  /strikes          → strike list
     GET  /health           → status + OHLC buffer
     POST /reset-csv        → wipe today's rows, start fresh
+    GET  /index-ltp        → live LTP + forming candle for BankNifty/HDFC/ICICI
+    GET  /index-candles    → 1-min OHLC for ?date=YYYY-MM-DD (DB-first, Kite fallback)
+    GET  /index-dates      → list of dates with stored index candle data
 """
 
 import collections
+import datetime as dt
 import json
 import os
 import threading
@@ -50,12 +54,24 @@ ACCESS_TOKEN = os.environ["KITE_ACCESS_TOKEN"]
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 NIFTY_TOKEN       = 256265
-FLASK_PORT        = int(os.environ.get("PORT", 5000))   # Railway sets PORT
+FLASK_PORT        = int(os.environ.get("PORT", 5000))
 OI_HISTORY_MAXLEN = 500
 
 NUM_STRIKES    = 11
 STRIKE_STEP    = 50
 ROLL_THRESHOLD = 100
+
+# ── INDEX INSTRUMENTS (separate lightweight ticker, LTP-only) ─────────────────
+
+BANKNIFTY_TOKEN = 260105    # NSE:NIFTY BANK
+HDFC_TOKEN      = 341249    # NSE:HDFCBANK
+ICICI_TOKEN     = 1270529   # NSE:ICICIBANK
+
+INDEX_TOKENS = {
+    BANKNIFTY_TOKEN: {"symbol": "NIFTY BANK", "label": "BankNifty"},
+    HDFC_TOKEN:      {"symbol": "HDFCBANK",   "label": "HDFC Bank"},
+    ICICI_TOKEN:     {"symbol": "ICICIBANK",  "label": "ICICI Bank"},
+}
 
 
 # ── APP ───────────────────────────────────────────────────────────────────────
@@ -75,11 +91,7 @@ def get_db():
 
 
 def init_db():
-    """
-    Create the oi_history table if it doesn't exist.
-    Uses a JSONB 'data' column so the schema is always flexible —
-    no ALTER TABLE needed when the strike window changes.
-    """
+    """Create the oi_history table if it doesn't exist."""
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -98,8 +110,32 @@ def init_db():
     print("DB initialised — table oi_history ready.")
 
 
+def init_index_db():
+    """Create index_candles table if it doesn't exist."""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS index_candles (
+                    id          SERIAL PRIMARY KEY,
+                    trade_date  DATE             NOT NULL DEFAULT CURRENT_DATE,
+                    token       INTEGER          NOT NULL,
+                    symbol      TEXT             NOT NULL,
+                    time_label  TEXT             NOT NULL,
+                    ts          DOUBLE PRECISION NOT NULL,
+                    open        NUMERIC(12, 2),
+                    high        NUMERIC(12, 2),
+                    low         NUMERIC(12, 2),
+                    close       NUMERIC(12, 2)
+                );
+                CREATE INDEX IF NOT EXISTS idx_ic_date_token
+                    ON index_candles (trade_date, token);
+            """)
+        conn.commit()
+    print("DB initialised — table index_candles ready.")
+
+
 def db_write_row(row: dict):
-    """Insert one 1-min completed candle row into PostgreSQL."""
+    """Insert one 1-min completed OI candle row into PostgreSQL."""
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -117,8 +153,28 @@ def db_write_row(row: dict):
         conn.commit()
 
 
+def db_write_index_candle(token: int, symbol: str, ts: float,
+                           o: float, h: float, l: float, c: float):
+    """Insert one completed 1-min index candle into PostgreSQL."""
+    label = ts_to_ist(ts).strftime("%H:%M")
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO index_candles
+                        (trade_date, token, symbol, time_label, ts, open, high, low, close)
+                    VALUES (CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (token, symbol, label, ts, o, h, l, c),
+                )
+            conn.commit()
+    except Exception as e:
+        print(f"[index_candles] DB write error: {e}")
+
+
 def db_read_today() -> list:
-    """Return all 1-min rows for today as a list of dicts."""
+    """Return all 1-min OI rows for today as a list of dicts."""
     with get_db() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
@@ -128,8 +184,34 @@ def db_read_today() -> list:
     return rows
 
 
+def db_read_index_candles(date_str: str) -> list:
+    """Return all 1-min index candles for a given date (YYYY-MM-DD)."""
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT token, symbol, time_label, ts, open, high, low, close
+                FROM   index_candles
+                WHERE  trade_date = %s
+                ORDER  BY token, ts ASC
+                """,
+                (date_str,),
+            )
+            return [dict(r) for r in cur.fetchall()]
+
+
+def db_read_index_dates() -> list:
+    """Return distinct trade dates that have any index candle data."""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT DISTINCT trade_date FROM index_candles ORDER BY trade_date DESC"
+            )
+            return [str(r[0]) for r in cur.fetchall()]
+
+
 def db_reset_today():
-    """Delete all rows for today (equivalent to /reset-csv)."""
+    """Delete all OI rows for today."""
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM oi_history WHERE trade_date = CURRENT_DATE")
@@ -164,7 +246,22 @@ minute_buffer = {
 }
 
 state_lock = threading.Lock()
-oi_history = collections.deque(maxlen=OI_HISTORY_MAXLEN)   # in-memory fallback
+oi_history = collections.deque(maxlen=OI_HISTORY_MAXLEN)
+
+# ── INDEX STATE ───────────────────────────────────────────────────────────────
+
+# Live tick state — updated on every WebSocket tick from index ticker
+index_tick_state = {
+    token: {"ltp": None, "ts": None} for token in INDEX_TOKENS
+}
+index_tick_lock = threading.Lock()
+
+# Per-minute OHLC buffer — sealed and written to DB when minute rolls over
+index_minute_buf = {
+    token: {"open": None, "high": None, "low": None, "close": None, "start_ts": None}
+    for token in INDEX_TOKENS
+}
+index_buf_lock = threading.Lock()
 
 
 # ── INSTRUMENT HELPERS ────────────────────────────────────────────────────────
@@ -256,7 +353,7 @@ def _update_ltp_ohlc(token, ltp):
         buf[token]["close"] = ltp
 
 
-# ── 1-MINUTE AGGREGATOR ───────────────────────────────────────────────────────
+# ── 1-MINUTE OI AGGREGATOR ────────────────────────────────────────────────────
 
 def _append_history():
     now          = time.time()
@@ -298,7 +395,6 @@ def _append_history():
         row[rk + "_baseline"]  = close.get(rk + "_baseline", 0)
         row[rk + "_delta"]     = close.get(rk + "_oi", 0) - start.get(rk + "_oi", 0)
 
-    # Write to PostgreSQL (non-blocking — do it in a thread to avoid holding state_lock)
     threading.Thread(target=db_write_row, args=(row,), daemon=True).start()
     oi_history.append(row)
 
@@ -320,7 +416,59 @@ def _append_history():
     minute_buffer["ltp_ohlc"] = new_ltp_ohlc
 
 
-# ── TICKER ────────────────────────────────────────────────────────────────────
+# ── INDEX TICK HANDLER ────────────────────────────────────────────────────────
+
+def handle_index_tick(tick: dict):
+    """Update live LTP state and per-minute OHLC buffer for index instruments."""
+    token = tick.get("instrument_token")
+    if token not in INDEX_TOKENS:
+        return
+
+    ltp = tick.get("last_price")
+    if ltp is None:
+        return
+
+    ts = tick.get("timestamp")
+    if ts is None:
+        ts = time.time()
+    elif hasattr(ts, "timestamp"):
+        ts = ts.timestamp()
+
+    # Update live tick
+    with index_tick_lock:
+        index_tick_state[token]["ltp"] = ltp
+        index_tick_state[token]["ts"]  = ts
+
+    # Update per-minute OHLC; seal completed candle when minute rolls over
+    with index_buf_lock:
+        buf       = index_minute_buf[token]
+        dt_ist    = ts_to_ist(ts)
+        bucket_ts = dt_ist.replace(second=0, microsecond=0).timestamp()
+
+        if buf["start_ts"] is None:
+            buf.update({"open": ltp, "high": ltp, "low": ltp,
+                        "close": ltp, "start_ts": bucket_ts})
+
+        elif bucket_ts > buf["start_ts"]:
+            # Seal completed candle asynchronously
+            meta   = INDEX_TOKENS[token]
+            sealed = dict(buf)
+            threading.Thread(
+                target=db_write_index_candle,
+                args=(token, meta["symbol"], sealed["start_ts"],
+                      sealed["open"], sealed["high"], sealed["low"], sealed["close"]),
+                daemon=True,
+            ).start()
+            # Open new candle
+            buf.update({"open": ltp, "high": ltp, "low": ltp,
+                        "close": ltp, "start_ts": bucket_ts})
+        else:
+            buf["high"]  = max(buf["high"],  ltp)
+            buf["low"]   = min(buf["low"],   ltp)
+            buf["close"] = ltp
+
+
+# ── NIFTY OI TICKER ───────────────────────────────────────────────────────────
 
 ticker_instance = None
 
@@ -388,6 +536,47 @@ def build_ticker():
     ticker_instance.on_error   = on_error
     ticker_instance.on_close   = on_close
     ticker_instance.connect(threaded=True)
+
+
+# ── INDEX TICKER (separate lightweight WebSocket, LTP-only) ───────────────────
+
+index_ticker_instance = None
+
+
+def build_index_ticker():
+    global index_ticker_instance
+    if index_ticker_instance:
+        try:
+            index_ticker_instance.close()
+        except Exception:
+            pass
+        time.sleep(1)
+
+    index_ticker_instance = KiteTicker(API_KEY, ACCESS_TOKEN)
+    tokens = list(INDEX_TOKENS.keys())
+
+    def on_ticks(ws, ticks):
+        for tick in ticks:
+            handle_index_tick(tick)
+
+    def on_connect(ws, response):
+        ws.subscribe(tokens)
+        ws.set_mode(ws.MODE_LTP, tokens)
+        print(f"[index ticker] Subscribed: {[INDEX_TOKENS[t]['symbol'] for t in tokens]}")
+
+    def on_error(ws, code, reason):
+        print(f"[index ticker] Error {code}: {reason}")
+
+    def on_close(ws, code, reason):
+        print(f"[index ticker] Closed: {reason}. Reconnecting in 5s...")
+        time.sleep(5)
+        build_index_ticker()
+
+    index_ticker_instance.on_ticks   = on_ticks
+    index_ticker_instance.on_connect = on_connect
+    index_ticker_instance.on_error   = on_error
+    index_ticker_instance.on_close   = on_close
+    index_ticker_instance.connect(threaded=True)
 
 
 # ── STRIKE ROLL ───────────────────────────────────────────────────────────────
@@ -481,12 +670,74 @@ def initialise(seed_spot):
     build_ticker()
 
 
+# ── KITE HISTORICAL DATA FETCHER (fallback for /index-candles) ────────────────
+
+def fetch_and_store_kite_historical(date_str: str) -> list:
+    """
+    Fetch 1-minute OHLC from Kite historical API for all three index instruments
+    for the given date, store each candle in index_candles, and return rows.
+    """
+    target  = dt.datetime.strptime(date_str, "%Y-%m-%d").date()
+    from_dt = dt.datetime(target.year, target.month, target.day, 9, 15, 0)
+    to_dt   = dt.datetime(target.year, target.month, target.day, 15, 30, 0)
+
+    all_rows = []
+
+    for token, meta in INDEX_TOKENS.items():
+        try:
+            records = kite.historical_data(
+                instrument_token=token,
+                from_date=from_dt,
+                to_date=to_dt,
+                interval="minute",
+                continuous=False,
+                oi=False,
+            )
+        except Exception as e:
+            print(f"[kite historical] {meta['symbol']} {date_str} error: {e}")
+            continue
+
+        for rec in records:
+            candle_dt = rec["date"]
+            ts = candle_dt.timestamp() if hasattr(candle_dt, "timestamp") else float(candle_dt)
+
+            o = float(rec["open"])
+            h = float(rec["high"])
+            l = float(rec["low"])
+            c = float(rec["close"])
+
+            try:
+                db_write_index_candle(token, meta["symbol"], ts, o, h, l, c)
+            except Exception as e:
+                print(f"[kite historical] DB write skip ({meta['symbol']}): {e}")
+
+            all_rows.append({
+                "token":      token,
+                "symbol":     meta["symbol"],
+                "time_label": ts_to_ist(ts).strftime("%H:%M"),
+                "ts":         ts,
+                "open":       o,
+                "high":       h,
+                "low":        l,
+                "close":      c,
+            })
+
+    print(f"[kite historical] {date_str}: fetched {len(all_rows)} candles across {len(INDEX_TOKENS)} instruments")
+    return all_rows
+
+
 # ── API ENDPOINTS ─────────────────────────────────────────────────────────────
 
 @app.route("/")
 def serve_dashboard():
-    """Serve the dashboard HTML — the public URL entry point."""
+    """Serve the OI dashboard HTML."""
     return send_from_directory("static", "index.html")
+
+
+@app.route("/charts")
+def serve_charts():
+    """Serve the index charts HTML."""
+    return send_from_directory("static", "charts.html")
 
 
 @app.route("/oi")
@@ -556,10 +807,6 @@ def get_strikes():
 
 @app.route("/oi/history")
 def get_history():
-    """
-    Returns ALL 1-min rows for today.
-    Reads from PostgreSQL — falls back to in-memory deque if DB unavailable.
-    """
     try:
         rows = db_read_today()
         return jsonify(rows)
@@ -629,7 +876,7 @@ def health():
 
 @app.route("/reset-csv", methods=["POST"])
 def reset_csv():
-    """Wipe today's rows from DB + in-memory buffer. Call each morning."""
+    """Wipe today's OI rows from DB + in-memory buffer. Call each morning."""
     try:
         db_reset_today()
     except Exception as e:
@@ -648,6 +895,86 @@ def reset_csv():
     return jsonify({"status": "ok", "message": "Today's rows cleared. Session reset to 0."})
 
 
+@app.route("/index-ltp")
+def get_index_ltp():
+    """
+    Live tick LTP + forming 1-min candle for BankNifty, HDFC Bank, ICICI Bank.
+    Polled by charts.html every 500 ms.
+    """
+    with index_tick_lock:
+        ticks = {
+            str(token): {
+                "symbol": meta["symbol"],
+                "label":  meta["label"],
+                "ltp":    index_tick_state[token]["ltp"],
+                "ts":     index_tick_state[token]["ts"],
+            }
+            for token, meta in INDEX_TOKENS.items()
+        }
+    with index_buf_lock:
+        live_candles = {
+            str(token): dict(index_minute_buf[token])
+            for token in INDEX_TOKENS
+        }
+    return jsonify({
+        "as_of":        now_ist().strftime("%H:%M:%S"),
+        "ticks":        ticks,
+        "live_candles": live_candles,
+    })
+
+
+@app.route("/index-candles")
+def get_index_candles():
+    """
+    1-min OHLC candles for a given date. Query param: ?date=YYYY-MM-DD
+    Strategy:
+      1. Check DB first.
+      2. If empty and date is not today, fetch from Kite historical API and save to DB.
+      3. Today's data is always from the live WebSocket buffer.
+    """
+    date_str = request.args.get("date", now_ist().strftime("%Y-%m-%d"))
+    today    = now_ist().strftime("%Y-%m-%d")
+
+    try:
+        rows = db_read_index_candles(date_str)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    if not rows and date_str != today:
+        print(f"[index-candles] No DB data for {date_str} — fetching from Kite historical API")
+        try:
+            rows = fetch_and_store_kite_historical(date_str)
+        except Exception as e:
+            return jsonify({"error": f"Kite historical fetch failed: {e}"}), 502
+
+    grouped = {}
+    for r in rows:
+        key = str(r["token"])
+        if key not in grouped:
+            grouped[key] = []
+        grouped[key].append({
+            "time_label": r["time_label"],
+            "ts":   float(r["ts"]),
+            "open": float(r["open"]),
+            "high": float(r["high"]),
+            "low":  float(r["low"]),
+            "close":float(r["close"]),
+        })
+
+    source = "kite_api" if rows and date_str != today and not db_read_index_candles(date_str) else "db"
+    return jsonify({"date": date_str, "candles": grouped, "source": source})
+
+
+@app.route("/index-dates")
+def get_index_dates():
+    """Return all dates that have stored index candle data (for date picker)."""
+    try:
+        dates = db_read_index_dates()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"dates": dates})
+
+
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -657,6 +984,7 @@ if __name__ == "__main__":
 
     print("\nInitialising database...")
     init_db()
+    init_index_db()
 
     print("\nFetching live Nifty spot...")
     seed_spot = get_live_spot()
@@ -665,15 +993,22 @@ if __name__ == "__main__":
     print("\nInitialising 11-strike window...")
     initialise(seed_spot)
 
+    print("\nStarting index ticker (BankNifty / HDFC / ICICI)...")
+    build_index_ticker()
+
     print(f"\nFlask listening on port {FLASK_PORT}")
-    print(f"  GET  /                serves dashboard HTML")
+    print(f"  GET  /                serves OI dashboard HTML")
+    print(f"  GET  /charts          serves index charts HTML")
     print(f"  GET  /oi              all strikes snapshot")
-    print(f"  GET  /ltp             live LTP all tokens (2s)")
-    print(f"  GET  /oi/live-candle  forming candle (5s)")
+    print(f"  GET  /ltp             live LTP all option tokens")
+    print(f"  GET  /oi/live-candle  forming candle")
     print(f"  GET  /strikes         strike list")
     print(f"  GET  /oi/history      1-min rows + spot OHLC")
     print(f"  GET  /health          status + OHLC buffer")
-    print(f"  POST /reset-csv       wipe today's rows")
+    print(f"  POST /reset-csv       wipe today's OI rows")
+    print(f"  GET  /index-ltp       live BankNifty/HDFC/ICICI ticks")
+    print(f"  GET  /index-candles   1-min OHLC by date")
+    print(f"  GET  /index-dates     available dates")
     print("\nPress Ctrl+C to stop.\n")
 
     app.run(host="0.0.0.0", port=FLASK_PORT, debug=False, use_reloader=False)
