@@ -45,8 +45,11 @@ select.date-sel:focus,input.date-sel:focus{outline:none;border-color:var(--flat)
 .size-group input[type=range]{width:60px;accent-color:var(--flat);cursor:pointer;}
 .size-val{min-width:18px;text-align:right;color:var(--text);}
 
-/* ── Chart cards ── */
+/* ── Layout ── */
 .charts-wrap{display:flex;flex-direction:column;gap:10px;}
+.row-top{width:100%;}
+.row-bottom{display:flex;gap:10px;}
+.row-bottom .chart-card{flex:1;min-width:0;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
 .chart-card.bnk{border-top:2px solid var(--c-banknifty);}
 .chart-card.hdf{border-top:2px solid var(--c-hdfc);}
@@ -209,8 +212,16 @@ function redrawAll() {
 // ── DOM BUILD ─────────────────────────────────────────────────────────────────
 function buildCards() {
   const wrap = document.getElementById('charts-wrap');
+  // BankNifty full-width top row
+  wrap.insertAdjacentHTML('beforeend', '<div class="row-top" id="row-top"></div>');
+  // HDFC + ICICI side-by-side bottom row
+  wrap.insertAdjacentHTML('beforeend', '<div class="row-bottom" id="row-bottom"></div>');
+
   INSTRUMENTS.forEach(inst => {
-    wrap.insertAdjacentHTML('beforeend', `
+    const container = inst.id === 'banknifty'
+      ? document.getElementById('row-top')
+      : document.getElementById('row-bottom');
+    container.insertAdjacentHTML('beforeend', `
       <div class="chart-card ${inst.cls}" id="card-${inst.id}">
         <div class="ch">
           <div class="ch-left">
