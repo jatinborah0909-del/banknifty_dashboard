@@ -730,12 +730,6 @@ def fetch_and_store_kite_historical(date_str: str) -> list:
 
 @app.route("/")
 def serve_dashboard():
-    """Serve the OI dashboard HTML."""
-    return send_from_directory("static", "index.html")
-
-
-@app.route("/charts")
-def serve_charts():
     """Serve the index charts HTML."""
     return send_from_directory("static", "charts.html")
 
