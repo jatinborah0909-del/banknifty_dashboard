@@ -321,7 +321,6 @@ async function fetchDates() {
 
 // ── MODE SWITCHING ────────────────────────────────────────────────────────────
 // Live polling ALWAYS runs. In historical mode we just render a snapshot instead.
-let histDate = null;   // non-null = viewing historical date
 
 function onDateChange(val) {
   if (val === 'live') { goLive(); return; }
