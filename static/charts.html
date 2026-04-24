@@ -448,6 +448,37 @@ async function fetchDates() {
   } catch(e) {}
 }
 
+async function fetchTodayCandles() {
+  // Pre-seed live candle buffer with today's already-stored 1-min candles
+  // so opening the chart mid-day shows the full day from 09:15 onwards.
+  try {
+    const today = nowISTDate();
+    const res   = await fetch(`${API}/index-candles?date=${today}`);
+    const data  = await res.json();
+    if (data.error || !data.candles) return;
+    INSTRUMENTS.forEach(inst => {
+      const rows = data.candles?.[inst.token] || [];
+      if (!rows.length) return;
+      const d = D[inst.token];
+      // Merge: only add candles not already in buffer (avoid duplicates)
+      const existing = new Set(d.candles.map(c => c.ts));
+      rows.forEach(r => { if (!existing.has(r.ts)) d.candles.push(r); });
+      // Sort by time just in case
+      d.candles.sort((a, b) => a.ts - b.ts);
+      // Set session open from first candle
+      if (d.sessionOpen == null && d.candles.length) d.sessionOpen = d.candles[0].open;
+      // Calculate ORB if we have 15+ candles
+      if (d.candles.length >= 15 && d.orbHigh == null) {
+        const orb = calcORB(d.candles);
+        d.orbHigh = orb.high; d.orbLow = orb.low;
+      }
+      console.log(`[today] ${inst.label}: loaded ${rows.length} candles from ${rows[0].time_label}`);
+    });
+  } catch(e) {
+    console.warn('fetchTodayCandles failed:', e);
+  }
+}
+
 function startPoll() {
   if (pollTimer) clearInterval(pollTimer);
   fetchLive();
@@ -737,7 +768,8 @@ window.addEventListener('resize', () => {
 buildCards();
 fetchDates();
 fetchPrevClose();
-startPoll();
+// Load today's stored candles first (so opening mid-day shows full day from 09:15)
+fetchTodayCandles().then(() => startPoll());
 </script>
 </body>
 </html>
