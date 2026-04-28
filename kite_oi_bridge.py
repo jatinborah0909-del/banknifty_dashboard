@@ -934,10 +934,12 @@ def get_index_candles():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    source = "db"
     if not rows and date_str != today:
         print(f"[index-candles] No DB data for {date_str} — fetching from Kite historical API")
         try:
             rows = fetch_and_store_kite_historical(date_str)
+            source = "kite_api"
         except Exception as e:
             return jsonify({"error": f"Kite historical fetch failed: {e}"}), 502
 
@@ -955,7 +957,6 @@ def get_index_candles():
             "close":float(r["close"]),
         })
 
-    source = "kite_api" if rows and date_str != today and not db_read_index_candles(date_str) else "db"
     return jsonify({"date": date_str, "candles": grouped, "source": source})
 
 
