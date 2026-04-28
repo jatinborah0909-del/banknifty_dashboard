@@ -23,9 +23,10 @@ Endpoints:
     GET  /strikes          → strike list
     GET  /health           → status + OHLC buffer
     POST /reset-csv        → wipe today's rows, start fresh
-    GET  /index-ltp        → live LTP + forming candle for BankNifty/HDFC/ICICI
+    GET  /index-ltp        → live LTP + forming candle for BankNifty + all 12 constituents
     GET  /index-candles    → 1-min OHLC for ?date=YYYY-MM-DD (DB-first, Kite fallback)
     GET  /index-dates      → list of dates with stored index candle data
+    GET  /constituent-ltp  → live point contribution for all 12 BankNifty constituents
 """
 
 import collections
@@ -63,15 +64,41 @@ ROLL_THRESHOLD = 100
 
 # ── INDEX INSTRUMENTS (separate lightweight ticker, LTP-only) ─────────────────
 
-BANKNIFTY_TOKEN = 260105    # NSE:NIFTY BANK
-HDFC_TOKEN      = 341249    # NSE:HDFCBANK
-ICICI_TOKEN     = 1270529   # NSE:ICICIBANK
+BANKNIFTY_TOKEN = 260105    # NSE:NIFTY BANK index
+
+# ── ALL 12 BANKNIFTY CONSTITUENTS ─────────────────────────────────────────────
+# Tokens: verify once via kite.instruments("NSE") if any seem wrong after deploy.
+# Weights: NSE free-float market-cap weights (approximate as of Q1 2026).
+# Point contribution = (ltp - prev_close) / prev_close * weight * bn_prev_close
+BANKNIFTY_CONSTITUENTS = {
+    341249:   {"symbol": "HDFCBANK",   "label": "HDFC Bank",      "weight": 0.2920, "color": "#4f8ef7"},
+    1270529:  {"symbol": "ICICIBANK",  "label": "ICICI Bank",     "weight": 0.2260, "color": "#00d68f"},
+    492033:   {"symbol": "KOTAKBANK",  "label": "Kotak Bank",     "weight": 0.1150, "color": "#f6c90e"},
+    1510401:  {"symbol": "AXISBANK",   "label": "Axis Bank",      "weight": 0.1020, "color": "#ff6b6b"},
+    779521:   {"symbol": "SBIN",       "label": "SBI",            "weight": 0.0870, "color": "#c084fc"},
+    1195009:  {"symbol": "INDUSINDBK", "label": "IndusInd Bank",  "weight": 0.0330, "color": "#fb923c"},
+    2263169:  {"symbol": "AUBANK",     "label": "AU Small Fin",   "weight": 0.0265, "color": "#34d399"},
+    81153:    {"symbol": "BANKBARODA", "label": "Bank of Baroda", "weight": 0.0255, "color": "#60a5fa"},
+    3812865:  {"symbol": "FEDERALBNK", "label": "Federal Bank",   "weight": 0.0240, "color": "#f472b6"},
+    2977281:  {"symbol": "IDFCFIRSTB", "label": "IDFC First",     "weight": 0.0215, "color": "#a78bfa"},
+    2674177:  {"symbol": "PNB",        "label": "Punjab NB",      "weight": 0.0215, "color": "#fbbf24"},
+    579329:   {"symbol": "BANDHANBNK", "label": "Bandhan Bank",   "weight": 0.0160, "color": "#f87171"},
+}
+
+# Legacy aliases kept for any code that still uses these
+HDFC_TOKEN  = 341249
+ICICI_TOKEN = 1270529
 
 INDEX_TOKENS = {
     BANKNIFTY_TOKEN: {"symbol": "NIFTY BANK", "label": "BankNifty"},
-    HDFC_TOKEN:      {"symbol": "HDFCBANK",   "label": "HDFC Bank"},
-    ICICI_TOKEN:     {"symbol": "ICICIBANK",  "label": "ICICI Bank"},
+    **{token: {"symbol": meta["symbol"], "label": meta["label"]}
+       for token, meta in BANKNIFTY_CONSTITUENTS.items()},
 }
+
+# Prev-close store for contribution calculation (populated at boot + daily)
+constituent_prev_close = {token: None for token in BANKNIFTY_CONSTITUENTS}
+bn_prev_close = None   # yesterday's BankNifty close
+constituent_prev_lock = threading.Lock()
 
 
 # ── APP ───────────────────────────────────────────────────────────────────────
@@ -251,6 +278,7 @@ oi_history = collections.deque(maxlen=OI_HISTORY_MAXLEN)
 # ── INDEX STATE ───────────────────────────────────────────────────────────────
 
 # Live tick state — updated on every WebSocket tick from index ticker
+# Covers BankNifty index + all 12 constituent stocks
 index_tick_state = {
     token: {"ltp": None, "ts": None} for token in INDEX_TOKENS
 }
@@ -543,6 +571,57 @@ def build_ticker():
 index_ticker_instance = None
 
 
+def fetch_constituent_prev_close():
+    """
+    Fetch yesterday's closing price for all 12 BankNifty constituents + BankNifty index.
+    Called once at boot and can be re-called at market open each day.
+    Uses Kite historical_data() for the most recent past trading day.
+    """
+    global bn_prev_close
+    today_dt   = now_ist().date()
+    # Try up to 5 days back to skip weekends/holidays
+    for days_back in range(1, 6):
+        target = today_dt - dt.timedelta(days=days_back)
+        from_dt = dt.datetime(target.year, target.month, target.day, 15, 25, 0)
+        to_dt   = dt.datetime(target.year, target.month, target.day, 15, 31, 0)
+        date_str = target.strftime("%Y-%m-%d")
+
+        fetched_any = False
+        # BankNifty index close
+        try:
+            recs = kite.historical_data(
+                instrument_token=BANKNIFTY_TOKEN,
+                from_date=from_dt, to_date=to_dt,
+                interval="minute", continuous=False, oi=False,
+            )
+            if recs:
+                with constituent_prev_lock:
+                    bn_prev_close = float(recs[-1]["close"])
+                print(f"[prev_close] BankNifty prev close ({date_str}): {bn_prev_close:,.2f}")
+                fetched_any = True
+        except Exception as e:
+            print(f"[prev_close] BankNifty error: {e}")
+
+        # Constituent closes
+        for token, meta in BANKNIFTY_CONSTITUENTS.items():
+            try:
+                recs = kite.historical_data(
+                    instrument_token=token,
+                    from_date=from_dt, to_date=to_dt,
+                    interval="minute", continuous=False, oi=False,
+                )
+                if recs:
+                    with constituent_prev_lock:
+                        constituent_prev_close[token] = float(recs[-1]["close"])
+                    print(f"[prev_close]   {meta['symbol']:12s}: {constituent_prev_close[token]:,.2f}")
+            except Exception as e:
+                print(f"[prev_close] {meta['symbol']} error: {e}")
+
+        if fetched_any:
+            break  # Found a valid trading day
+        print(f"[prev_close] No data for {date_str}, trying earlier...")
+
+
 def build_index_ticker():
     global index_ticker_instance
     if index_ticker_instance:
@@ -560,9 +639,10 @@ def build_index_ticker():
             handle_index_tick(tick)
 
     def on_connect(ws, response):
+        tokens = list(INDEX_TOKENS.keys())
         ws.subscribe(tokens)
         ws.set_mode(ws.MODE_LTP, tokens)
-        print(f"[index ticker] Subscribed: {[INDEX_TOKENS[t]['symbol'] for t in tokens]}")
+        print(f"[index ticker] Subscribed: BankNifty index + {len(BANKNIFTY_CONSTITUENTS)} constituents ({len(tokens)} total)")
 
     def on_error(ws, code, reason):
         print(f"[index ticker] Error {code}: {reason}")
@@ -734,6 +814,12 @@ def serve_dashboard():
     return send_from_directory("static", "charts.html")
 
 
+@app.route("/contribution")
+def serve_contribution():
+    """Serve the BankNifty constituent contribution dashboard."""
+    return send_from_directory("static", "contribution.html")
+
+
 @app.route("/oi")
 def get_oi():
     with state_lock:
@@ -892,7 +978,7 @@ def reset_csv():
 @app.route("/index-ltp")
 def get_index_ltp():
     """
-    Live tick LTP + forming 1-min candle for BankNifty, HDFC Bank, ICICI Bank.
+    Live tick LTP + forming 1-min candle for BankNifty index + all 12 constituents.
     Polled by charts.html every 500 ms.
     """
     with index_tick_lock:
@@ -917,6 +1003,50 @@ def get_index_ltp():
     })
 
 
+@app.route("/constituent-ltp")
+def get_constituent_ltp():
+    """
+    Live LTP + point contribution for all 12 BankNifty constituents.
+    Polled by the contribution dashboard every second.
+
+    Returns per-constituent:
+      ltp, prev_close, pct_change, weight, contrib_pts (points added to BankNifty)
+    contrib_pts = pct_change * weight * bn_prev_close
+    """
+    with index_tick_lock:
+        snap = {token: index_tick_state[token]["ltp"] for token in BANKNIFTY_CONSTITUENTS}
+    with constituent_prev_lock:
+        pc   = dict(constituent_prev_close)
+        bn_pc = bn_prev_close
+
+    result = {}
+    total_contrib = 0.0
+    for token, meta in BANKNIFTY_CONSTITUENTS.items():
+        ltp      = snap.get(token)
+        prev     = pc.get(token)
+        pct      = (ltp - prev) / prev if (ltp and prev) else None
+        contrib  = pct * meta["weight"] * bn_pc if (pct is not None and bn_pc) else None
+        if contrib is not None:
+            total_contrib += contrib
+        result[str(token)] = {
+            "symbol":      meta["symbol"],
+            "label":       meta["label"],
+            "weight":      meta["weight"],
+            "color":       meta["color"],
+            "ltp":         ltp,
+            "prev_close":  prev,
+            "pct_change":  round(pct * 100, 4) if pct is not None else None,
+            "contrib_pts": round(contrib, 2)    if contrib is not None else None,
+        }
+
+    return jsonify({
+        "as_of":          now_ist().strftime("%H:%M:%S"),
+        "bn_prev_close":  bn_pc,
+        "total_contrib":  round(total_contrib, 2),
+        "constituents":   result,
+    })
+
+
 @app.route("/index-candles")
 def get_index_candles():
     """
@@ -934,12 +1064,10 @@ def get_index_candles():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    source = "db"
     if not rows and date_str != today:
         print(f"[index-candles] No DB data for {date_str} — fetching from Kite historical API")
         try:
             rows = fetch_and_store_kite_historical(date_str)
-            source = "kite_api"
         except Exception as e:
             return jsonify({"error": f"Kite historical fetch failed: {e}"}), 502
 
@@ -957,6 +1085,7 @@ def get_index_candles():
             "close":float(r["close"]),
         })
 
+    source = "kite_api" if rows and date_str != today and not db_read_index_candles(date_str) else "db"
     return jsonify({"date": date_str, "candles": grouped, "source": source})
 
 
@@ -988,8 +1117,11 @@ if __name__ == "__main__":
     print("\nInitialising 11-strike window...")
     initialise(seed_spot)
 
-    print("\nStarting index ticker (BankNifty / HDFC / ICICI)...")
+    print("\nStarting index ticker (BankNifty index + 12 constituents)...")
     build_index_ticker()
+
+    print("\nFetching constituent prev-close prices (for contribution calc)...")
+    threading.Thread(target=fetch_constituent_prev_close, daemon=True).start()
 
     print(f"\nFlask listening on port {FLASK_PORT}")
     print(f"  GET  /                serves OI dashboard HTML")
@@ -1001,9 +1133,10 @@ if __name__ == "__main__":
     print(f"  GET  /oi/history      1-min rows + spot OHLC")
     print(f"  GET  /health          status + OHLC buffer")
     print(f"  POST /reset-csv       wipe today's OI rows")
-    print(f"  GET  /index-ltp       live BankNifty/HDFC/ICICI ticks")
+    print(f"  GET  /index-ltp       live BankNifty + 12 constituent ticks")
     print(f"  GET  /index-candles   1-min OHLC by date")
     print(f"  GET  /index-dates     available dates")
+    print(f"  GET  /constituent-ltp live point contributions (12 banks)")
     print("\nPress Ctrl+C to stop.\n")
 
     app.run(host="0.0.0.0", port=FLASK_PORT, debug=False, use_reloader=False)
