@@ -14,7 +14,7 @@
   --dn:#e03050; --dn-dim:rgba(224,48,80,.10);
   --flat:#2563eb; --flat-dim:rgba(37,99,235,.10);
   --orb-line:#d97706;
-  --yaxis-w:64px;
+  --yaxis-w:80px;
 }
 body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;min-height:100vh;}
 
@@ -319,7 +319,7 @@ function switchPage(page, btn) {
 // CHARTS PAGE
 // ══════════════════════════════════════════════════════════
 let ivMin=1, CW=9, GAP=2, CHART_H=200;
-const YPAD=10, YAXIS_W=64;
+const YPAD=16, YAXIS_W=80;
 let histDate=null, pollTimer=null;
 
 const D={};
@@ -682,7 +682,7 @@ function _render(inst,all,isLast,orbHigh,orbLow,live){
 
   const labelEvery=Math.max(1,Math.ceil(60/(CW+GAP)));
   ctx.font=(8*dpr)+'px JetBrains Mono,monospace';ctx.fillStyle='#9da3b8';ctx.textAlign='center';
-  all.forEach((c,i)=>{if(i%labelEvery!==0)return;ctx.fillText(c.time_label,i*(CW+GAP)+GAP+CW/2,H-2);});
+  all.forEach((c,i)=>{if(i%labelEvery!==0)return;ctx.fillText(c.time_label,i*(CW+GAP)+GAP+CW/2,H-4);});
 
   if(orbHigh!=null&&orbLow!=null&&orbHigh>=lo&&orbLow<=hi){
     const yH=toY(orbHigh),yL=toY(orbLow);
@@ -719,10 +719,10 @@ function _drawYAxis(inst,hi,lo,H,steps,orbHigh,orbLow){
   yc.width=YAXIS_W*dpr;yc.height=H*dpr;yc.style.width=YAXIS_W+'px';yc.style.height=H+'px';
   const ctx=yc.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,YAXIS_W,H);
   const range=hi-lo||1;const toY=v=>YPAD+((hi-v)/range)*(H-YPAD*2);
-  ctx.font=(9*dpr)+'px JetBrains Mono,monospace';ctx.textAlign='right';
-  for(let i=0;i<=steps;i++){const v=lo+(hi-lo)*(i/steps);ctx.fillStyle='#9da3b8';ctx.fillText(fmt(v),YAXIS_W-4,toY(v)+3.5);}
-  if(orbHigh!=null&&orbHigh>=lo&&orbHigh<=hi){ctx.fillStyle='#d97706';ctx.fillText(fmt(orbHigh),YAXIS_W-4,toY(orbHigh)-4);}
-  if(orbLow!=null&&orbLow>=lo&&orbLow<=hi){ctx.fillStyle='#d97706';ctx.fillText(fmt(orbLow),YAXIS_W-4,toY(orbLow)+11);}
+  ctx.font=(8*dpr)+'px JetBrains Mono,monospace';ctx.textAlign='right';
+  for(let i=0;i<=steps;i++){const v=lo+(hi-lo)*(i/steps);ctx.fillStyle='#9da3b8';ctx.fillText(fmt(v),YAXIS_W-6,toY(v)+3.5);}
+  if(orbHigh!=null&&orbHigh>=lo&&orbHigh<=hi){ctx.fillStyle='#d97706';ctx.fillText(fmt(orbHigh),YAXIS_W-6,toY(orbHigh)-4);}
+  if(orbLow!=null&&orbLow>=lo&&orbLow<=hi){ctx.fillStyle='#d97706';ctx.fillText(fmt(orbLow),YAXIS_W-6,toY(orbLow)+11);}
   ctx.strokeStyle='#e2e4ea';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(YAXIS_W-0.5,0);ctx.lineTo(YAXIS_W-0.5,H);ctx.stroke();
 }
