@@ -138,7 +138,7 @@ select.date-sel:focus,input.date-sel:focus{outline:none;border-color:var(--flat)
         <option value="live">Live</option>
       </select>
       <input type="date" class="date-sel" id="date-input" style="width:118px"
-             onchange="onDateChange(this.value)">
+             onchange="onDateChange(this.value)" max="">
     </div>
     <button class="live-btn" id="live-btn" onclick="goLive()">↺ LIVE</button>
   </div>
@@ -304,7 +304,8 @@ async function fetchPrevClose() {
     const today = nowISTDate();
     const dates = (data.dates || []).filter(d => d < today);
     if (!dates.length) return;
-    const prevDate = dates[0]; // most recent past date
+    // dates from /index-dates are ORDER BY trade_date DESC, so [0] is most recent past date
+    const prevDate = dates[0];
     const res2 = await fetch(`${API}/index-candles?date=${prevDate}`);
     const data2 = await res2.json();
     INSTRUMENTS.forEach(inst => {
@@ -487,7 +488,7 @@ function startPoll() {
 
 // ── MODE SWITCHING ────────────────────────────────────────────────────────────
 function onDateChange(val) {
-  if (val === 'live' || !val) { goLive(); return; }
+  if (val === 'live' || !val || val === nowISTDate()) { goLive(); return; }
   histDate = val;
   document.getElementById('live-btn').style.display = 'inline-block';
   document.getElementById('mode-label').textContent = 'HIST';
@@ -559,10 +560,9 @@ function _render(inst, all, isLast, orbHigh, orbLow, live) {
   // ── Price range ──
   let hi = -Infinity, lo = Infinity;
   all.forEach(c => { hi = Math.max(hi, c.high); lo = Math.min(lo, c.low); });
-  // NOTE: ORB levels are drawn as reference lines but must NOT expand the Y range,
-  // because a stale orbLow from a different day's first 15 candles can be far from
-  // today's price and would crush all candles into a tiny band at the top.
-  // ORB lines that fall outside the visible range simply won't be drawn.
+  // ORB levels must NOT expand the Y range — they're reference lines only.
+  // Letting orbLow from a different session drag `lo` far below current prices
+  // would squash all candles into a tiny band at the top of the chart.
   const pad = (hi - lo) * 0.1 || hi * 0.002 || 1;
   hi += pad; lo -= pad;
   const range = hi - lo || 1;
@@ -587,7 +587,7 @@ function _render(inst, all, isLast, orbHigh, orbLow, live) {
     ctx.fillText(c.time_label, x, H - 2);
   });
 
-  // ── ORB lines (only draw if within visible price range) ──
+  // ── ORB lines (only if within visible price range) ──
   if (orbHigh != null && orbLow != null && orbHigh >= lo && orbLow <= hi) {
     const yH = toY(orbHigh), yL = toY(orbLow);
     ctx.save();
