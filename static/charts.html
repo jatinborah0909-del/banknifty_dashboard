@@ -559,8 +559,10 @@ function _render(inst, all, isLast, orbHigh, orbLow, live) {
   // ── Price range ──
   let hi = -Infinity, lo = Infinity;
   all.forEach(c => { hi = Math.max(hi, c.high); lo = Math.min(lo, c.low); });
-  if (orbHigh != null) hi = Math.max(hi, orbHigh);
-  if (orbLow  != null) lo = Math.min(lo, orbLow);
+  // NOTE: ORB levels are drawn as reference lines but must NOT expand the Y range,
+  // because a stale orbLow from a different day's first 15 candles can be far from
+  // today's price and would crush all candles into a tiny band at the top.
+  // ORB lines that fall outside the visible range simply won't be drawn.
   const pad = (hi - lo) * 0.1 || hi * 0.002 || 1;
   hi += pad; lo -= pad;
   const range = hi - lo || 1;
@@ -585,8 +587,8 @@ function _render(inst, all, isLast, orbHigh, orbLow, live) {
     ctx.fillText(c.time_label, x, H - 2);
   });
 
-  // ── ORB lines ──
-  if (orbHigh != null && orbLow != null) {
+  // ── ORB lines (only draw if within visible price range) ──
+  if (orbHigh != null && orbLow != null && orbHigh >= lo && orbLow <= hi) {
     const yH = toY(orbHigh), yL = toY(orbLow);
     ctx.save();
     ctx.setLineDash([5,5]); ctx.strokeStyle = '#f6c90e'; ctx.lineWidth = 1; ctx.globalAlpha = 0.75;
@@ -651,12 +653,12 @@ function _drawYAxis(inst, hi, lo, H, steps, orbHigh, orbLow) {
     ctx.fillStyle = '#3d4460';
     ctx.fillText(fmt(v), YAXIS_W - 4, y + 3.5);
   }
-  // ORB price labels on y-axis
-  if (orbHigh != null) {
+  // ORB price labels on y-axis (only if within visible range)
+  if (orbHigh != null && orbHigh >= lo && orbHigh <= hi) {
     ctx.fillStyle = '#f6c90e';
     ctx.fillText(fmt(orbHigh), YAXIS_W-4, toY(orbHigh)-4);
   }
-  if (orbLow != null) {
+  if (orbLow != null && orbLow >= lo && orbLow <= hi) {
     ctx.fillStyle = '#f6c90e';
     ctx.fillText(fmt(orbLow), YAXIS_W-4, toY(orbLow)+11);
   }
