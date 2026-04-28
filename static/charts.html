@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Index Charts</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#0c0e13; --surface:#111318; --surface2:#181b23;
@@ -14,13 +14,12 @@
   --dn:#f0415a; --dn-dim:rgba(240,65,90,.10);
   --flat:#4f8ef7; --flat-dim:rgba(79,142,247,.10);
   --orb-line:#f6c90e;
-  --c-banknifty:#4f8ef7; --c-hdfc:#f6c90e; --c-icici:#00d68f;
   --yaxis-w:64px;
 }
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:12px;min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;min-height:100vh;}
 
 /* ── Header ── */
-.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface);}
 .hdr-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;color:#fff;text-transform:uppercase;}
 .hdr-title em{color:var(--flat);font-style:normal;}
 .hdr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -32,58 +31,70 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 .btn-group{display:flex;gap:3px;}
 .xbtn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
 .xbtn.active,.xbtn:hover{border-color:var(--flat);color:var(--flat);background:var(--flat-dim);}
-.xbtn.danger{border-color:var(--dn);color:var(--dn);}
-.xbtn.danger:hover{background:var(--dn-dim);}
 .date-group{display:flex;align-items:center;gap:5px;}
 .date-label{font-size:10px;color:var(--muted);}
 select.date-sel,input.date-sel{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 7px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;}
 select.date-sel:focus,input.date-sel:focus{outline:none;border-color:var(--flat);}
 .live-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;border-radius:4px;border:1px solid var(--up);color:var(--up);background:var(--up-dim);cursor:pointer;display:none;}
 .live-btn:hover{background:rgba(0,214,143,.2);}
-/* size controls */
 .size-group{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
 .size-group input[type=range]{width:60px;accent-color:var(--flat);cursor:pointer;}
 .size-val{min-width:18px;text-align:right;color:var(--text);}
 
-/* ── Layout ── */
+/* ── Page tabs ── */
+.page-tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--surface);}
+.page-tab{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:7px 18px;cursor:pointer;color:var(--muted);border:none;background:transparent;border-bottom:2px solid transparent;transition:all .15s;}
+.page-tab.active{color:#fff;border-bottom-color:var(--flat);}
+.page-tab:hover:not(.active){color:var(--text);}
+.page-section{display:none;padding:12px;}
+.page-section.active{display:block;}
+
+/* ══ CHARTS PAGE ══════════════════════════════════════════════════ */
 .charts-wrap{display:flex;flex-direction:column;gap:10px;}
 .row-top{width:100%;}
-.row-bottom{display:flex;gap:10px;}
-.row-bottom .chart-card{flex:1;min-width:0;}
+/* ── Bank selector panel ── */
+#bank-selector{padding:6px 0 8px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+#bank-selector-inner{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+.bank-ckbox{display:none;}
+.bank-ck-label{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap;}
+.bank-ck-label:hover{background:var(--surface2);color:var(--text);}
+.bank-ckbox:checked+.bank-ck-label{background:var(--surface2);color:#fff;}
+.ck-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sel-actions{display:flex;gap:4px;margin-left:6px;}
+.sel-act-btn{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .12s;}
+.sel-act-btn:hover{color:var(--text);border-color:var(--flat);}
+/* ── Multi-chart grid ── */
+#bank-cards-wrap{display:grid;gap:8px;grid-template-columns:1fr;}
+#row-bottom.banks-1 #bank-cards-wrap{grid-template-columns:1fr;}
+#row-bottom.banks-2 #bank-cards-wrap{grid-template-columns:1fr 1fr;}
+#row-bottom.banks-3 #bank-cards-wrap{grid-template-columns:1fr 1fr 1fr;}
+#row-bottom.banks-4 #bank-cards-wrap{grid-template-columns:1fr 1fr;}
+#row-bottom.banks-5 #bank-cards-wrap,#row-bottom.banks-6 #bank-cards-wrap{grid-template-columns:1fr 1fr 1fr;}
+#row-bottom.banks-7 #bank-cards-wrap,#row-bottom.banks-8 #bank-cards-wrap,
+#row-bottom.banks-9 #bank-cards-wrap,#row-bottom.banks-10 #bank-cards-wrap,
+#row-bottom.banks-11 #bank-cards-wrap,#row-bottom.banks-12 #bank-cards-wrap{grid-template-columns:1fr 1fr 1fr 1fr;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
-.chart-card.bnk{border-top:2px solid var(--c-banknifty);}
-.chart-card.hdf{border-top:2px solid var(--c-hdfc);}
-.chart-card.ici{border-top:2px solid var(--c-icici);}
-
-/* card header */
 .ch{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0;flex-wrap:wrap;gap:6px;}
 .ch-left{display:flex;flex-direction:column;gap:1px;}
 .ch-name{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;}
 .ch-meta{font-size:9px;color:var(--muted);}
 .ch-right{display:flex;align-items:baseline;gap:8px;}
 .ch-ltp{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;transition:color .25s;}
-.ch-ltp.up{color:var(--up);} .ch-ltp.dn{color:var(--dn);} .ch-ltp.fl{color:var(--flat);}
+.ch-ltp.up{color:var(--up);}.ch-ltp.dn{color:var(--dn);}.ch-ltp.fl{color:var(--flat);}
 .ch-badges{display:flex;gap:5px;align-items:baseline;flex-wrap:wrap;}
 .ch-chg{font-size:10px;font-weight:500;padding:2px 6px;border-radius:3px;font-variant-numeric:tabular-nums;}
 .ch-chg.up{background:var(--up-dim);color:var(--up);}
 .ch-chg.dn{background:var(--dn-dim);color:var(--dn);}
 .ch-chg.fl{background:var(--flat-dim);color:var(--flat);}
 .ch-prev{font-size:9px;color:var(--muted);padding-top:1px;}
-
-/* ohlc strip */
 .ohlc{display:flex;gap:10px;padding:3px 12px;font-size:9px;color:var(--muted);flex-wrap:wrap;}
 .ohlc .lbl{color:var(--muted);margin-right:2px;}
 .ohlc .val{color:var(--text);font-weight:500;}
-/* ORB strip */
 .orb-strip{display:flex;gap:10px;align-items:center;padding:2px 12px 4px;font-size:9px;color:var(--muted);}
-.orb-badge{padding:1px 6px;border-radius:3px;background:rgba(246,201,14,.12);color:var(--orb-line);font-weight:500;letter-spacing:.03em;}
-
-/* ── Chart scroll container ── */
+.orb-badge{padding:1px 6px;border-radius:3px;background:rgba(246,201,14,.12);color:var(--orb-line);font-weight:500;}
 .chart-outer{position:relative;display:flex;border-top:1px solid var(--border);}
-/* Fixed Y-axis panel on the left */
 .yaxis-panel{flex-shrink:0;width:var(--yaxis-w);position:relative;background:var(--surface);}
 .yaxis-panel canvas{display:block;}
-/* Scrollable candle area */
 .scroll-area{flex:1;overflow-x:auto;overflow-y:hidden;cursor:crosshair;}
 .scroll-area::-webkit-scrollbar{height:4px;}
 .scroll-area::-webkit-scrollbar-track{background:var(--surface);}
@@ -91,138 +102,280 @@ select.date-sel:focus,input.date-sel:focus{outline:none;border-color:var(--flat)
 .candle-canvas-wrap{position:relative;display:inline-block;}
 .candle-canvas-wrap canvas{display:block;}
 .no-data{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;letter-spacing:.05em;}
+.crosshair{position:absolute;top:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none;display:none;}
 
-/* ── Tooltip ── */
-.tip{position:fixed;background:#1a1d28;border:1px solid var(--border2);border-radius:5px;padding:7px 10px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:200;line-height:1.8;white-space:nowrap;}
+/* ══ CONTRIBUTION PAGE ════════════════════════════════════════════ */
+.bn-row{display:flex;align-items:center;gap:14px;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;border-left:3px solid var(--flat);flex-wrap:wrap;margin-bottom:10px;}
+.bn-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--flat);letter-spacing:.08em;}
+.bn-ltp{font-size:18px;font-weight:700;color:#fff;}
+.bn-chg{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;}
+.bn-chg.up{color:var(--up);background:var(--up-dim);}
+.bn-chg.dn{color:var(--dn);background:var(--dn-dim);}
+.bn-meta{font-size:9px;color:var(--muted);margin-left:auto;}
+.bn-meta b{color:var(--text);}
+
+/* Contribution sub-tabs */
+.ctab-bar{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.ctab{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.ctab:hover{color:var(--text);background:var(--surface2);}
+.ctab.active{background:var(--flat-dim);color:#fff;border-color:var(--flat);}
+.cpanel{display:none;flex-direction:column;gap:10px;}
+.cpanel.active{display:flex;}
+.sec-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600;}
+
+/* Bar chart */
+.bar-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 14px;}
+.bar-row{display:grid;grid-template-columns:100px 1fr 66px 60px;align-items:center;gap:7px;margin-bottom:4px;}
+.bar-name{font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{height:16px;background:var(--surface2);border-radius:3px;position:relative;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;position:absolute;top:0;transition:width .35s ease;}
+.bar-fill.up{background:var(--up);left:50%;}
+.bar-fill.dn{background:var(--dn);right:50%;}
+.bar-zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border2);}
+.bar-pts{font-size:11px;font-weight:600;text-align:right;}
+.bar-pts.up{color:var(--up);}.bar-pts.dn{color:var(--dn);}
+.bar-pct{font-size:9px;color:var(--muted);text-align:right;}
+
+/* Stacked */
+.stacked-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 14px;}
+.stacked-bar{display:flex;height:44px;border-radius:4px;overflow:hidden;gap:1px;}
+.stk-seg{transition:flex .35s ease;cursor:default;position:relative;min-width:2px;}
+.stk-seg:hover .stk-tip{opacity:1;}
+.stk-tip{position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#1a1d28;border:1px solid var(--border2);border-radius:4px;padding:5px 8px;font-size:9px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:100;line-height:1.7;}
+.stacked-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted);}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* Cards grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:9px 11px;cursor:pointer;transition:border-color .15s,background .15s;border-left:3px solid transparent;}
+.mini-card:hover{background:var(--surface2);border-color:var(--border2);}
+.mini-card.up{border-left-color:var(--up);}
+.mini-card.dn{border-left-color:var(--dn);}
+.mc-sym{font-size:9px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;}
+.mc-ltp{font-size:14px;font-weight:700;color:#fff;}
+.mc-row{display:flex;align-items:baseline;justify-content:space-between;margin-top:2px;}
+.mc-pts{font-size:11px;font-weight:600;}
+.mc-pts.up{color:var(--up);}.mc-pts.dn{color:var(--dn);}
+.mc-wt{font-size:9px;color:var(--muted);}
+
+/* Bank detail */
+.bd-header{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:11px 14px;border-left:3px solid #888;flex-wrap:wrap;}
+.bd-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;letter-spacing:.07em;}
+.bd-ltp{font-size:20px;font-weight:700;color:#fff;}
+.bd-chg{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;}
+.bd-chg.up{color:var(--up);background:var(--up-dim);}
+.bd-chg.dn{color:var(--dn);background:var(--dn-dim);}
+.bd-pts-wrap{font-size:10px;color:var(--muted);}
+.bd-pts-wrap b{font-size:16px;font-weight:700;}
+.bd-pts-wrap b.up{color:var(--up);}.bd-pts-wrap b.dn{color:var(--dn);}
+.bd-meta{margin-left:auto;font-size:9px;color:var(--muted);text-align:right;line-height:1.8;}
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 14px;}
+.hist-svg{width:100%;height:80px;overflow:visible;}
+
+/* ── Shared tooltip ── */
+.tip{position:fixed;background:#1a1d28;border:1px solid var(--border2);border-radius:5px;padding:7px 10px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:300;line-height:1.8;white-space:nowrap;}
 .tip.show{opacity:1;}
 .tip .tl{color:var(--muted);font-size:9px;margin-bottom:2px;}
-
-/* crosshair line */
-.crosshair{position:absolute;top:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none;display:none;}
 </style>
 </head>
 <body>
 
+<!-- ── Shared header ── -->
 <div class="hdr">
   <div class="hdr-title">Index <em>Charts</em></div>
   <div class="hdr-controls">
     <div class="pulse" id="pulse"></div>
     <div class="status-chip">AS OF <b id="as-of">--:--:--</b></div>
-    <div class="status-chip">MODE <b id="mode-label">LIVE</b></div>
-
-    <!-- Interval -->
-    <div class="btn-group">
+    <div class="status-chip" id="mode-chip">MODE <b id="mode-label">LIVE</b></div>
+    <div class="btn-group" id="iv-group">
       <button class="xbtn active" onclick="setIv(1,this)">1m</button>
       <button class="xbtn"        onclick="setIv(3,this)">3m</button>
       <button class="xbtn"        onclick="setIv(5,this)">5m</button>
     </div>
-
-    <!-- Candle width -->
-    <div class="size-group">
-      W<input type="range" id="cw-slider" min="4" max="30" value="9"
-              oninput="setCW(+this.value)">
+    <div class="size-group" id="w-ctrl">
+      W<input type="range" id="cw-slider" min="4" max="30" value="9" oninput="setCW(+this.value)">
       <span class="size-val" id="cw-val">9</span>
     </div>
-
-    <!-- Chart height -->
-    <div class="size-group">
-      H<input type="range" id="ch-slider" min="120" max="500" step="10" value="200"
-              oninput="setCH(+this.value)">
+    <div class="size-group" id="h-ctrl">
+      H<input type="range" id="ch-slider" min="120" max="500" step="10" value="200" oninput="setCH(+this.value)">
       <span class="size-val" id="ch-val">200</span>
     </div>
-
-    <!-- Date -->
-    <div class="date-group">
+    <div class="date-group" id="date-grp">
       <span class="date-label">DATE</span>
       <select class="date-sel" id="date-sel" onchange="onDateChange(this.value)">
         <option value="live">Live</option>
       </select>
-      <input type="date" class="date-sel" id="date-input" style="width:118px"
-             onchange="onDateChange(this.value)" max="">
+      <input type="date" class="date-sel" id="date-input" style="width:118px" onchange="onDateChange(this.value)">
     </div>
     <button class="live-btn" id="live-btn" onclick="goLive()">↺ LIVE</button>
+    <!-- Contrib header info (hidden on Charts page) -->
+    <div class="status-chip" id="contrib-hdr" style="display:none">
+      PREV CLOSE <b id="bn-pc-hdr">–</b> &nbsp; TOTAL <b id="total-hdr">–</b>
+    </div>
   </div>
 </div>
 
-<div class="charts-wrap" id="charts-wrap"></div>
+<!-- ── Page tab bar ── -->
+<div class="page-tab-bar">
+  <button class="page-tab active" onclick="switchPage('charts',this)">CHARTS</button>
+  <button class="page-tab"        onclick="switchPage('contrib',this)">CONTRIBUTION</button>
+</div>
+
+<!-- ══════════ CHARTS PAGE ══════════ -->
+<div class="page-section active" id="page-charts">
+  <div class="charts-wrap" id="charts-wrap"></div>
+</div>
+
+<!-- ══════════ CONTRIBUTION PAGE ══════════ -->
+<div class="page-section" id="page-contrib">
+
+  <div class="bn-row">
+    <div class="bn-label">BANKNIFTY</div>
+    <div class="bn-ltp" id="bn-ltp">–</div>
+    <div class="bn-chg" id="bn-chg">–</div>
+    <div class="bn-meta">Computed contribution: <b id="bn-contrib-sum">–</b></div>
+  </div>
+
+  <div class="ctab-bar" id="ctab-bar">
+    <button class="ctab active" data-ctab="overview" onclick="switchCtab('overview',this)">Overview</button>
+  </div>
+
+  <div class="cpanel active" id="cpanel-overview">
+    <div class="bar-card">
+      <div class="sec-lbl">Point Contribution (pts added to BankNifty)</div>
+      <div id="bar-chart"><div style="color:var(--muted);font-size:10px;padding:8px 0">Waiting for data…</div></div>
+    </div>
+    <div class="stacked-card">
+      <div class="sec-lbl">Stacked Contribution Share</div>
+      <div class="stacked-bar" id="stacked-bar"></div>
+      <div class="stacked-legend" id="stacked-legend"></div>
+    </div>
+    <div>
+      <div class="sec-lbl">All Constituents</div>
+      <div class="cards-grid" id="cards-grid"><div style="color:var(--muted);font-size:10px;padding:8px 0">Waiting for data…</div></div>
+    </div>
+  </div>
+
+  <div id="bank-panels-wrap"></div>
+</div>
+
 <div class="tip" id="tip"></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const API  = '';
-const POLL = 500;
+// ══════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════
+const API          = '';
+const POLL_CHARTS  = 500;
+const POLL_CONTRIB = 1200;
 
-const INSTRUMENTS = [
-  { id:'banknifty', token:'260105',  label:'BankNifty', cls:'bnk', color:'#4f8ef7' },
-  { id:'hdfc',      token:'341249',  label:'HDFC Bank', cls:'hdf', color:'#f6c90e' },
-  { id:'icici',     token:'1270529', label:'ICICI Bank',cls:'ici', color:'#00d68f' },
+const BANKNIFTY_TOKEN = '260105';
+
+const CONSTITUENTS = [
+  { token:'341249',  symbol:'HDFCBANK',   label:'HDFC Bank',      weight:0.2920, color:'#4f8ef7' },
+  { token:'1270529', symbol:'ICICIBANK',  label:'ICICI Bank',     weight:0.2260, color:'#00d68f' },
+  { token:'492033',  symbol:'KOTAKBANK',  label:'Kotak Bank',     weight:0.1150, color:'#f6c90e' },
+  { token:'1510401', symbol:'AXISBANK',   label:'Axis Bank',      weight:0.1020, color:'#ff6b6b' },
+  { token:'779521',  symbol:'SBIN',       label:'SBI',            weight:0.0870, color:'#c084fc' },
+  { token:'1195009', symbol:'INDUSINDBK', label:'IndusInd Bank',  weight:0.0330, color:'#fb923c' },
+  { token:'2263169', symbol:'AUBANK',     label:'AU Small Fin',   weight:0.0265, color:'#34d399' },
+  { token:'81153',   symbol:'BANKBARODA', label:'Bank of Baroda', weight:0.0255, color:'#60a5fa' },
+  { token:'3812865', symbol:'FEDERALBNK', label:'Federal Bank',   weight:0.0240, color:'#f472b6' },
+  { token:'2977281', symbol:'IDFCFIRSTB', label:'IDFC First',     weight:0.0215, color:'#a78bfa' },
+  { token:'2674177', symbol:'PNB',        label:'Punjab NB',      weight:0.0215, color:'#fbbf24' },
+  { token:'579329',  symbol:'BANDHANBNK', label:'Bandhan Bank',   weight:0.0160, color:'#f87171' },
 ];
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let ivMin    = 1;
-let CW       = 9;      // candle width px
-let GAP      = 2;      // gap between candles
-let CHART_H  = 200;    // canvas height px
-const YPAD   = 10;     // vertical padding inside chart
-const YAXIS_W= 64;     // y-axis panel width px
+// INSTRUMENTS = BankNifty index + all 12 stocks
+const INSTRUMENTS = [
+  { id:'banknifty', token:'260105', label:'BankNifty', color:'#4f8ef7' },
+  ...CONSTITUENTS.map(c=>({ id:c.symbol.toLowerCase(), token:c.token, label:c.label, color:c.color })),
+];
 
-let histDate  = null;
-let pollTimer = null;
+// ══════════════════════════════════════════════════════════
+// PAGE SWITCHING
+// ══════════════════════════════════════════════════════════
+let currentPage = 'charts';
 
-const D = {};
-INSTRUMENTS.forEach(inst => {
-  D[inst.token] = {
-    candles: [], liveC: null,
-    sessionOpen: null, prevClose: null,
-    ltp: null, prevLtp: null,
-    orbHigh: null, orbLow: null,
-    _render: null,
-  };
-});
-const histD = {};
-const prevLiveBucket = {};
+function switchPage(page, btn) {
+  currentPage = page;
+  document.querySelectorAll('.page-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
 
-// ── SIZE CONTROLS ─────────────────────────────────────────────────────────────
-function setCW(v) {
-  CW = v;
-  document.getElementById('cw-val').textContent = v;
-  redrawAll();
-}
-function setCH(v) {
-  CHART_H = v;
-  document.getElementById('ch-val').textContent = v;
-  // Resize all chart-outer containers
-  INSTRUMENTS.forEach(inst => {
-    const outer = document.getElementById(`outer-${inst.id}`);
-    if (outer) outer.style.height = v + 'px';
+  const chartsOnlyIds = ['iv-group','w-ctrl','h-ctrl','date-grp','live-btn','mode-chip'];
+  chartsOnlyIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display = page==='charts' ? '' : 'none';
   });
+  document.getElementById('contrib-hdr').style.display = page==='contrib' ? '' : 'none';
+
+  if(page==='contrib' && !contribPollTimer) startContribPoll();
+}
+
+// ══════════════════════════════════════════════════════════
+// CHARTS PAGE
+// ══════════════════════════════════════════════════════════
+let ivMin=1, CW=9, GAP=2, CHART_H=200;
+const YPAD=10, YAXIS_W=64;
+let histDate=null, pollTimer=null;
+
+const D={};
+INSTRUMENTS.forEach(inst=>{
+  D[inst.token]={candles:[],liveC:null,sessionOpen:null,prevClose:null,
+                 ltp:null,prevLtp:null,orbHigh:null,orbLow:null,_render:null,_prevLiveC:null};
+});
+const histD={}, prevLiveBucket={};
+
+function setCW(v){CW=v;document.getElementById('cw-val').textContent=v;redrawAll();}
+function setCH(v){
+  CHART_H=v; document.getElementById('ch-val').textContent=v;
+  INSTRUMENTS.forEach(inst=>{const o=document.getElementById('outer-'+inst.id);if(o)o.style.height=v+'px';});
   redrawAll();
 }
-function redrawAll() {
-  if (histDate) {
-    INSTRUMENTS.forEach(inst => {
-      const hd = histD[inst.token];
-      if (hd) drawHistChart(inst, hd.candles, { high: hd.orbHigh, low: hd.orbLow });
+function getVisibleBankIds(){
+  return [...document.querySelectorAll('.bank-ckbox:checked')].map(c=>c.dataset.id);
+}
+function redrawAll(){
+  const bnk=INSTRUMENTS.find(i=>i.id==='banknifty');
+  const visibleIds=getVisibleBankIds();
+  if(histDate){
+    if(bnk){const hd=histD[bnk.token];if(hd)drawHistChart(bnk,hd.candles,{high:hd.orbHigh,low:hd.orbLow});}
+    INSTRUMENTS.filter(i=>i.id!=='banknifty'&&visibleIds.includes(i.id)).forEach(inst=>{
+      const hd=histD[inst.token];if(hd)drawHistChart(inst,hd.candles,{high:hd.orbHigh,low:hd.orbLow});
     });
   } else {
-    INSTRUMENTS.forEach(inst => drawChart(inst, true));
+    if(bnk) drawChart(bnk,true);
+    INSTRUMENTS.filter(i=>i.id!=='banknifty'&&visibleIds.includes(i.id)).forEach(inst=>drawChart(inst,true));
   }
 }
 
-// ── DOM BUILD ─────────────────────────────────────────────────────────────────
-function buildCards() {
-  const wrap = document.getElementById('charts-wrap');
-  // BankNifty full-width top row
-  wrap.insertAdjacentHTML('beforeend', '<div class="row-top" id="row-top"></div>');
-  // HDFC + ICICI side-by-side bottom row
-  wrap.insertAdjacentHTML('beforeend', '<div class="row-bottom" id="row-bottom"></div>');
+// ── DOM build ──────────────────────────────────────────────
+function buildCards(){
+  const wrap=document.getElementById('charts-wrap');
+  wrap.insertAdjacentHTML('beforeend','<div class="row-top" id="row-top"></div>');
+  wrap.insertAdjacentHTML('beforeend',`
+    <div id="row-bottom">
+      <div id="bank-selector">
+        <div id="bank-selector-inner">
+          <!-- checkboxes injected below -->
+          <div class="sel-actions">
+            <button class="sel-act-btn" onclick="selectAllBanks()">All</button>
+            <button class="sel-act-btn" onclick="selectNoBanks()">None</button>
+            <button class="sel-act-btn" onclick="selectTopContribs()">Top 4</button>
+          </div>
+        </div>
+      </div>
+      <div id="bank-cards-wrap"></div>
+    </div>`);
 
-  INSTRUMENTS.forEach(inst => {
-    const container = inst.id === 'banknifty'
-      ? document.getElementById('row-top')
-      : document.getElementById('row-bottom');
-    container.insertAdjacentHTML('beforeend', `
-      <div class="chart-card ${inst.cls}" id="card-${inst.id}">
+  INSTRUMENTS.forEach(inst=>{
+    const isBnk=inst.id==='banknifty';
+    const container=isBnk?document.getElementById('row-top'):document.getElementById('bank-cards-wrap');
+    container.insertAdjacentHTML('beforeend',`
+      <div class="chart-card" id="card-${inst.id}" style="border-top:2px solid ${inst.color};${!isBnk?'display:none':''}">
         <div class="ch">
           <div class="ch-left">
             <div class="ch-name" style="color:${inst.color}">${inst.label}</div>
@@ -249,9 +402,7 @@ function buildCards() {
           <span>L <b id="orbL-${inst.id}" style="color:#f6c90e">–</b></span>
         </div>
         <div class="chart-outer" id="outer-${inst.id}" style="height:${CHART_H}px">
-          <div class="yaxis-panel" id="yp-${inst.id}">
-            <canvas id="yc-${inst.id}"></canvas>
-          </div>
+          <div class="yaxis-panel" id="yp-${inst.id}"><canvas id="yc-${inst.id}"></canvas></div>
           <div class="scroll-area" id="sa-${inst.id}">
             <div class="no-data" id="nd-${inst.id}" style="height:100%;width:100%">Waiting for data…</div>
             <div class="candle-canvas-wrap" id="cw-wrap-${inst.id}" style="display:none;height:100%">
@@ -260,518 +411,545 @@ function buildCards() {
             </div>
           </div>
         </div>
-      </div>
-    `);
+      </div>`);
+    const sa=document.getElementById('sa-'+inst.id);
+    sa.addEventListener('mousemove',e=>onHover(e,inst));
+    sa.addEventListener('mouseleave',()=>{hideTip();hideXhair(inst);});
+  });
 
-    // Mouse events
-    const sa = document.getElementById(`sa-${inst.id}`);
-    sa.addEventListener('mousemove', e => onHover(e, inst));
-    sa.addEventListener('mouseleave', () => { hideTip(); hideXhair(inst); });
+  // Build checkbox selector for each constituent bank
+  const inner=document.getElementById('bank-selector-inner');
+  const actionsEl=inner.querySelector('.sel-actions');
+  INSTRUMENTS.filter(i=>i.id!=='banknifty').forEach(inst=>{
+    const ckId='ck-'+inst.id;
+    const wrapper=document.createElement('span');
+    wrapper.style.display='contents';
+    wrapper.innerHTML=`<input type="checkbox" class="bank-ckbox" id="${ckId}" data-id="${inst.id}" onchange="onBankToggle()">
+      <label class="bank-ck-label" for="${ckId}" style="border-color:${inst.color}33">
+        <span class="ck-dot" style="background:${inst.color}"></span>${inst.label}
+      </label>`;
+    inner.insertBefore(wrapper, actionsEl);
+  });
+
+  // Default: show first 2 banks checked
+  const checks=document.querySelectorAll('.bank-ckbox');
+  [0,1].forEach(i=>{ if(checks[i]) checks[i].checked=true; });
+  applyBankSelection();
+}
+
+// ── Checkbox toggle logic ──────────────────────────────────
+function onBankToggle(){ applyBankSelection(); }
+
+function applyBankSelection(){
+  const checked=[...document.querySelectorAll('.bank-ckbox:checked')].map(c=>c.dataset.id);
+  const rowBottom=document.getElementById('row-bottom');
+  // Update grid column class
+  rowBottom.className='banks-'+Math.max(1,checked.length);
+  // Show/hide chart cards and trigger draw for newly visible ones
+  INSTRUMENTS.filter(i=>i.id!=='banknifty').forEach(inst=>{
+    const card=document.getElementById('card-'+inst.id);
+    const visible=checked.includes(inst.id);
+    const wasHidden=card.style.display==='none';
+    card.style.display=visible?'':'none';
+    if(visible&&wasHidden){
+      // Redraw chart now that it's visible and has layout dimensions
+      requestAnimationFrame(()=>{
+        const hd=histD[inst.token];
+        if(hd) drawHistChart(inst,hd.candles,{high:hd.orbHigh,low:hd.orbLow});
+        else drawChart(inst,true);
+      });
+    }
   });
 }
 
-// ── CANDLE AGGREGATION ────────────────────────────────────────────────────────
-function aggregate(raw, ivM) {
-  if (!ivM || ivM <= 1) return raw.map(c => ({ ...c }));
-  const out = [];
-  raw.forEach(c => {
-    const bucket = Math.floor(c.ts / (ivM * 60)) * (ivM * 60);
-    if (!out.length || out[out.length-1].ts !== bucket) {
-      out.push({ ts:bucket, time_label:c.time_label, open:c.open, high:c.high, low:c.low, close:c.close });
-    } else {
-      const last = out[out.length-1];
-      last.high  = Math.max(last.high, c.high);
-      last.low   = Math.min(last.low, c.low);
-      last.close = c.close;
-    }
+// ── Bulk selection helpers ─────────────────────────────────
+function selectAllBanks(){
+  document.querySelectorAll('.bank-ckbox').forEach(c=>c.checked=true);
+  applyBankSelection();
+}
+function selectNoBanks(){
+  document.querySelectorAll('.bank-ckbox').forEach(c=>c.checked=false);
+  applyBankSelection();
+}
+function selectTopContribs(){
+  const constituents=contribData?.constituents||{};
+  const hasData=Object.values(constituents).some(c=>c.contrib_pts!=null);
+  if(!hasData){
+    // No contrib data yet — fetch it once, then re-run selection
+    fetch(API+'/constituent-ltp').then(r=>r.json()).then(j=>{
+      contribData=j;selectTopContribs();
+    }).catch(()=>{
+      // Fallback: top 4 by weight
+      const topIds=CONSTITUENTS.slice(0,4).map(c=>c.symbol.toLowerCase());
+      document.querySelectorAll('.bank-ckbox').forEach(c=>{c.checked=topIds.includes(c.dataset.id);});
+      applyBankSelection();
+    });
+    return;
+  }
+  const byAbsContrib=CONSTITUENTS
+    .filter(c=>constituents[c.token]?.contrib_pts!=null)
+    .sort((a,b)=>Math.abs(constituents[b.token].contrib_pts)-Math.abs(constituents[a.token].contrib_pts))
+    .slice(0,4)
+    .map(c=>c.symbol.toLowerCase());
+  document.querySelectorAll('.bank-ckbox').forEach(c=>{
+    c.checked=byAbsContrib.includes(c.dataset.id);
+  });
+  applyBankSelection();
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function fmt(v){if(v==null||isNaN(v))return'–';return v>=1000?v.toLocaleString('en-IN',{maximumFractionDigits:2}):v.toFixed(2);}
+function nowISTDate(){return new Date(Date.now()+5.5*3600000).toISOString().slice(0,10);}
+function fmtTS(ts){const d=new Date(ts*1000+5.5*3600000);return d.getUTCHours().toString().padStart(2,'0')+':'+d.getUTCMinutes().toString().padStart(2,'0');}
+function aggregate(raw,ivM){
+  if(!ivM||ivM<=1)return raw.map(c=>({...c}));
+  const out=[];
+  raw.forEach(c=>{
+    const b=Math.floor(c.ts/(ivM*60))*(ivM*60);
+    if(!out.length||out[out.length-1].ts!==b)out.push({ts:b,time_label:c.time_label,open:c.open,high:c.high,low:c.low,close:c.close});
+    else{const l=out[out.length-1];l.high=Math.max(l.high,c.high);l.low=Math.min(l.low,c.low);l.close=c.close;}
   });
   return out;
 }
+function calcORB(raw){if(!raw.length)return{high:null,low:null};const sl=raw.slice(0,15);return{high:Math.max(...sl.map(c=>c.high)),low:Math.min(...sl.map(c=>c.low))};}
 
-function calcORB(raw) {
-  if (!raw.length) return { high: null, low: null };
-  const sl = raw.slice(0, 15);
-  return { high: Math.max(...sl.map(c=>c.high)), low: Math.min(...sl.map(c=>c.low)) };
+// ── Prev close ─────────────────────────────────────────────
+async function fetchPrevClose(){
+  try{
+    const res=await fetch(API+'/index-dates');const data=await res.json();
+    const today=nowISTDate();
+    const dates=(data.dates||[]).filter(d=>d<today);if(!dates.length)return;
+    const res2=await fetch(API+'/index-candles?date='+dates[0]);const data2=await res2.json();
+    INSTRUMENTS.forEach(inst=>{const rows=data2.candles?.[inst.token]||[];if(rows.length)D[inst.token].prevClose=rows[rows.length-1].close;});
+  }catch(e){}
 }
 
-// ── PREV CLOSE (yesterday's last candle close) ────────────────────────────────
-// We fetch yesterday's data to get prev close. Called once on boot.
-async function fetchPrevClose() {
-  // Get list of available dates, pick the last one before today
-  try {
-    const res  = await fetch(`${API}/index-dates`);
-    const data = await res.json();
-    const today = nowISTDate();
-    const dates = (data.dates || []).filter(d => d < today);
-    if (!dates.length) return;
-    // dates from /index-dates are ORDER BY trade_date DESC, so [0] is most recent past date
-    const prevDate = dates[0];
-    const res2 = await fetch(`${API}/index-candles?date=${prevDate}`);
-    const data2 = await res2.json();
-    INSTRUMENTS.forEach(inst => {
-      const rows = data2.candles?.[inst.token] || [];
-      if (rows.length) D[inst.token].prevClose = rows[rows.length-1].close;
-    });
-  } catch(e) { /* no prev close available */ }
+// ── Live ingest ────────────────────────────────────────────
+function ingestLiveTick(token,ltp,ts,slc){
+  const d=D[token];if(d.sessionOpen==null)d.sessionOpen=ltp;d.prevLtp=d.ltp;d.ltp=ltp;
+  if(slc&&slc.start_ts!=null)d.liveC={ts:slc.start_ts,time_label:fmtTS(slc.start_ts),open:slc.open,high:slc.high,low:slc.low,close:slc.close};
 }
-
-function nowISTDate() {
-  const now = new Date();
-  const ist = new Date(now.getTime() + 5.5*3600000);
-  return ist.toISOString().slice(0,10);
-}
-
-// ── LIVE INGEST ───────────────────────────────────────────────────────────────
-function ingestLiveTick(token, ltp, ts, serverLiveCandle) {
-  const d = D[token];
-  if (d.sessionOpen == null) d.sessionOpen = ltp;
-  d.prevLtp = d.ltp;
-  d.ltp     = ltp;
-  if (serverLiveCandle && serverLiveCandle.start_ts != null) {
-    d.liveC = {
-      ts:         serverLiveCandle.start_ts,
-      time_label: fmtTS(serverLiveCandle.start_ts),
-      open:  serverLiveCandle.open,
-      high:  serverLiveCandle.high,
-      low:   serverLiveCandle.low,
-      close: serverLiveCandle.close,
-    };
-  }
-}
-
-function maybeAccumulateLiveCandle(token) {
-  const d  = D[token];
-  const lc = d.liveC;
-  if (!lc) return;
-  const prev = prevLiveBucket[token];
-  if (prev != null && lc.ts !== prev) {
-    const candles = d.candles;
-    if ((!candles.length || candles[candles.length-1].ts !== prev) && D[token]._prevLiveC) {
-      candles.push({ ...D[token]._prevLiveC });
-      if (candles.length === 15) {
-        const orb = calcORB(candles);
-        D[token].orbHigh = orb.high; D[token].orbLow = orb.low;
-      }
+function maybeAccumulateLiveCandle(token){
+  const d=D[token];const lc=d.liveC;if(!lc)return;
+  const prev=prevLiveBucket[token];
+  if(prev!=null&&lc.ts!==prev){
+    const cs=d.candles;
+    if((!cs.length||cs[cs.length-1].ts!==prev)&&d._prevLiveC){
+      cs.push({...d._prevLiveC});
+      if(cs.length===15){const orb=calcORB(cs);d.orbHigh=orb.high;d.orbLow=orb.low;}
     }
   }
-  D[token]._prevLiveC    = { ...lc };
-  prevLiveBucket[token]  = lc.ts;
+  d._prevLiveC={...lc};prevLiveBucket[token]=lc.ts;
 }
 
-// ── POLLING ───────────────────────────────────────────────────────────────────
-async function fetchLive() {
-  try {
-    const res  = await fetch(`${API}/index-ltp`);
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    document.getElementById('as-of').textContent = data.as_of || '--';
+async function fetchLive(){
+  try{
+    const res=await fetch(API+'/index-ltp');if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    document.getElementById('as-of').textContent=data.as_of||'--';
     document.getElementById('pulse').classList.add('live');
-    INSTRUMENTS.forEach(inst => {
-      const tick = data.ticks?.[inst.token];
-      const lc   = data.live_candles?.[inst.token];
-      if (!tick || tick.ltp == null) return;
-      ingestLiveTick(inst.token, tick.ltp, tick.ts, lc);
+    INSTRUMENTS.forEach(inst=>{
+      const tick=data.ticks?.[inst.token];const lc=data.live_candles?.[inst.token];
+      if(!tick||tick.ltp==null)return;
+      ingestLiveTick(inst.token,tick.ltp,tick.ts,lc);
       maybeAccumulateLiveCandle(inst.token);
-      if (histDate) return;
-      updateLtpUI(inst);
-      updateOhlcUI(inst);
-      drawChart(inst, true);
+      if(histDate)return;
+      updateLtpUI(inst);updateOhlcUI(inst);
+      const visIds=getVisibleBankIds();
+      if(inst.id==='banknifty'||visIds.includes(inst.id))drawChart(inst,true);
     });
-  } catch(e) {
-    document.getElementById('pulse').classList.remove('live');
-  }
+  }catch(e){document.getElementById('pulse').classList.remove('live');}
 }
 
-async function fetchHistorical(dateStr) {
-  INSTRUMENTS.forEach(inst => {
-    document.getElementById(`nd-${inst.id}`).textContent = 'Fetching data…';
-    document.getElementById(`nd-${inst.id}`).style.display = 'flex';
-    document.getElementById(`cw-wrap-${inst.id}`).style.display = 'none';
+async function fetchHistorical(dateStr){
+  INSTRUMENTS.forEach(inst=>{
+    document.getElementById('nd-'+inst.id).textContent='Fetching data…';
+    document.getElementById('nd-'+inst.id).style.display='flex';
+    document.getElementById('cw-wrap-'+inst.id).style.display='none';
   });
-  try {
-    const res  = await fetch(`${API}/index-candles?date=${dateStr}`);
-    const data = await res.json();
-    if (data.error) {
-      INSTRUMENTS.forEach(inst => { document.getElementById(`nd-${inst.id}`).textContent = '⚠ ' + data.error; });
-      return;
-    }
-    if (data.source === 'kite_api') fetchDates();
-    INSTRUMENTS.forEach(inst => {
-      const rows = data.candles?.[inst.token] || [];
-      const orb  = calcORB(rows);
-      histD[inst.token] = { candles: rows, orbHigh: orb.high, orbLow: orb.low };
-      if (!rows.length) {
-        document.getElementById(`nd-${inst.id}`).textContent = 'No data for this date';
-        return;
-      }
-      // prev close = last candle of the day before in histD
-      const last = rows[rows.length-1];
-      drawHistChart(inst, rows, orb);
-      const el = document.getElementById(`ltp-${inst.id}`);
-      if (last) { el.textContent = fmt(last.close); el.className = 'ch-ltp fl'; }
-      updateOhlcHistUI(inst, last);
-      // Show change vs first candle open of this day
-      updateHistChg(inst, rows);
-      document.getElementById(`meta-${inst.id}`).textContent =
-        `${ivMin}m · ${rows.length} candles · ${dateStr}` + (data.source==='kite_api' ? ' · Kite API' : '');
+  try{
+    const res=await fetch(API+'/index-candles?date='+dateStr);const data=await res.json();
+    if(data.error){INSTRUMENTS.forEach(inst=>{document.getElementById('nd-'+inst.id).textContent='⚠ '+data.error;});return;}
+    if(data.source==='kite_api')fetchDates();
+    INSTRUMENTS.forEach(inst=>{
+      const rows=data.candles?.[inst.token]||[];const orb=calcORB(rows);
+      histD[inst.token]={candles:rows,orbHigh:orb.high,orbLow:orb.low};
+      if(!rows.length){document.getElementById('nd-'+inst.id).textContent='No data for this date';return;}
+      const last=rows[rows.length-1];
+      drawHistChart(inst,rows,orb);
+      const el=document.getElementById('ltp-'+inst.id);
+      if(last){el.textContent=fmt(last.close);el.className='ch-ltp fl';}
+      updateOhlcHistUI(inst,last);
+      updateHistChg(inst,rows);
+      document.getElementById('meta-'+inst.id).textContent=ivMin+'m · '+rows.length+' candles · '+dateStr+(data.source==='kite_api'?' · Kite API':'');
     });
-  } catch(e) {
-    INSTRUMENTS.forEach(inst => { document.getElementById(`nd-${inst.id}`).textContent = 'Error: ' + e.message; });
-  }
+  }catch(e){INSTRUMENTS.forEach(inst=>{document.getElementById('nd-'+inst.id).textContent='Error: '+e.message;});}
 }
 
-function updateHistChg(inst, rows) {
-  if (!rows.length) return;
-  const open = rows[0].open;
-  const close= rows[rows.length-1].close;
-  const diff = close - open;
-  const pct  = (diff / open * 100).toFixed(2);
-  const cls  = diff > 0 ? 'up' : diff < 0 ? 'dn' : 'fl';
-  document.getElementById(`chg-${inst.id}`).textContent    = (diff>0?'+':'')+pct+'%';
-  document.getElementById(`chg-${inst.id}`).className      = 'ch-chg '+cls;
-  document.getElementById(`chg-abs-${inst.id}`).textContent= (diff>0?'+':'')+fmt(diff);
-  document.getElementById(`chg-abs-${inst.id}`).className  = 'ch-chg '+cls;
-  document.getElementById(`prev-${inst.id}`).textContent   = 'vs open '+fmt(open);
+function updateHistChg(inst,rows){
+  if(!rows.length)return;
+  const open=rows[0].open;const close=rows[rows.length-1].close;
+  const diff=close-open;const pct=(diff/open*100).toFixed(2);const cls=diff>0?'up':diff<0?'dn':'fl';
+  document.getElementById('chg-'+inst.id).textContent=(diff>0?'+':'')+pct+'%';
+  document.getElementById('chg-'+inst.id).className='ch-chg '+cls;
+  document.getElementById('chg-abs-'+inst.id).textContent=(diff>0?'+':'')+fmt(diff);
+  document.getElementById('chg-abs-'+inst.id).className='ch-chg '+cls;
+  document.getElementById('prev-'+inst.id).textContent='vs open '+fmt(open);
 }
 
-async function fetchDates() {
-  try {
-    const res  = await fetch(`${API}/index-dates`);
-    const data = await res.json();
-    const sel  = document.getElementById('date-sel');
-    // Remove old dynamic options
-    [...sel.options].forEach(o => { if (o.value !== 'live') o.remove(); });
-    (data.dates || []).forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d; opt.textContent = d;
-      sel.appendChild(opt);
+async function fetchDates(){
+  try{
+    const res=await fetch(API+'/index-dates');const data=await res.json();
+    const sel=document.getElementById('date-sel');
+    [...sel.options].forEach(o=>{if(o.value!=='live')o.remove();});
+    (data.dates||[]).forEach(d=>{const opt=document.createElement('option');opt.value=d;opt.textContent=d;sel.appendChild(opt);});
+  }catch(e){}
+}
+
+async function fetchTodayCandles(){
+  try{
+    const today=nowISTDate();const res=await fetch(API+'/index-candles?date='+today);const data=await res.json();
+    if(data.error||!data.candles)return;
+    INSTRUMENTS.forEach(inst=>{
+      const rows=data.candles?.[inst.token]||[];if(!rows.length)return;
+      const d=D[inst.token];const existing=new Set(d.candles.map(c=>c.ts));
+      rows.forEach(r=>{if(!existing.has(r.ts))d.candles.push(r);});
+      d.candles.sort((a,b)=>a.ts-b.ts);
+      if(d.sessionOpen==null&&d.candles.length)d.sessionOpen=d.candles[0].open;
+      if(d.candles.length>=15&&d.orbHigh==null){const orb=calcORB(d.candles);d.orbHigh=orb.high;d.orbLow=orb.low;}
     });
-  } catch(e) {}
+  }catch(e){}
 }
 
-async function fetchTodayCandles() {
-  // Pre-seed live candle buffer with today's already-stored 1-min candles
-  // so opening the chart mid-day shows the full day from 09:15 onwards.
-  try {
-    const today = nowISTDate();
-    const res   = await fetch(`${API}/index-candles?date=${today}`);
-    const data  = await res.json();
-    if (data.error || !data.candles) return;
-    INSTRUMENTS.forEach(inst => {
-      const rows = data.candles?.[inst.token] || [];
-      if (!rows.length) return;
-      const d = D[inst.token];
-      // Merge: only add candles not already in buffer (avoid duplicates)
-      const existing = new Set(d.candles.map(c => c.ts));
-      rows.forEach(r => { if (!existing.has(r.ts)) d.candles.push(r); });
-      // Sort by time just in case
-      d.candles.sort((a, b) => a.ts - b.ts);
-      // Set session open from first candle
-      if (d.sessionOpen == null && d.candles.length) d.sessionOpen = d.candles[0].open;
-      // Calculate ORB if we have 15+ candles
-      if (d.candles.length >= 15 && d.orbHigh == null) {
-        const orb = calcORB(d.candles);
-        d.orbHigh = orb.high; d.orbLow = orb.low;
-      }
-      console.log(`[today] ${inst.label}: loaded ${rows.length} candles from ${rows[0].time_label}`);
-    });
-  } catch(e) {
-    console.warn('fetchTodayCandles failed:', e);
-  }
-}
+function startPoll(){if(pollTimer)clearInterval(pollTimer);fetchLive();pollTimer=setInterval(fetchLive,POLL_CHARTS);}
 
-function startPoll() {
-  if (pollTimer) clearInterval(pollTimer);
-  fetchLive();
-  pollTimer = setInterval(fetchLive, POLL);
-}
-
-// ── MODE SWITCHING ────────────────────────────────────────────────────────────
-function onDateChange(val) {
-  if (val === 'live' || !val || val === nowISTDate()) { goLive(); return; }
-  histDate = val;
-  document.getElementById('live-btn').style.display = 'inline-block';
-  document.getElementById('mode-label').textContent = 'HIST';
-  document.getElementById('as-of').textContent = val;
+function onDateChange(val){
+  if(val==='live'||!val||val===nowISTDate()){goLive();return;}
+  histDate=val;
+  document.getElementById('live-btn').style.display='inline-block';
+  document.getElementById('mode-label').textContent='HIST';
+  document.getElementById('as-of').textContent=val;
   fetchHistorical(val);
 }
-
-function goLive() {
-  histDate = null;
-  document.getElementById('live-btn').style.display = 'none';
-  document.getElementById('date-sel').value = 'live';
-  document.getElementById('date-input').value = '';
-  document.getElementById('mode-label').textContent = 'LIVE';
-  INSTRUMENTS.forEach(inst => { updateLtpUI(inst); updateOhlcUI(inst); drawChart(inst, true); });
+function goLive(){
+  histDate=null;
+  document.getElementById('live-btn').style.display='none';
+  document.getElementById('date-sel').value='live';
+  document.getElementById('date-input').value='';
+  document.getElementById('mode-label').textContent='LIVE';
+  INSTRUMENTS.forEach(inst=>{updateLtpUI(inst);updateOhlcUI(inst);});
+  const bnk=INSTRUMENTS.find(i=>i.id==='banknifty');if(bnk)drawChart(bnk,true);
+  const visIds=getVisibleBankIds();
+  INSTRUMENTS.filter(i=>i.id!=='banknifty'&&visIds.includes(i.id)).forEach(inst=>drawChart(inst,true));
+}
+function setIv(min,btn){
+  ivMin=min;
+  document.querySelectorAll('#iv-group .xbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');redrawAll();
 }
 
-function setIv(min, btn) {
-  ivMin = min;
-  document.querySelectorAll('.xbtn').forEach(b => { if (['1m','3m','5m'].includes(b.textContent)) b.classList.remove('active'); });
-  btn.classList.add('active');
-  redrawAll();
+// ── Draw engine ────────────────────────────────────────────
+function drawChart(inst,live){
+  const d=D[inst.token];
+  const raw=[...d.candles,...(d.liveC&&live?[d.liveC]:[])];
+  _render(inst,aggregate(raw,ivMin),live&&d.liveC!=null,d.orbHigh,d.orbLow,live);
 }
+function drawHistChart(inst,rows,orb){_render(inst,aggregate(rows,ivMin),false,orb.high,orb.low,false);}
 
-// ── DRAW ENGINE ───────────────────────────────────────────────────────────────
-function drawChart(inst, live) {
-  const d   = D[inst.token];
-  const raw = [...d.candles, ...(d.liveC && live ? [d.liveC] : [])];
-  const all = aggregate(raw, ivMin);
-  const isLast = live && d.liveC != null;
-  _render(inst, all, isLast, d.orbHigh, d.orbLow, live);
-}
+function _render(inst,all,isLast,orbHigh,orbLow,live){
+  const nd=document.getElementById('nd-'+inst.id);
+  const cwWrap=document.getElementById('cw-wrap-'+inst.id);
+  if(!all.length){nd.style.display='flex';cwWrap.style.display='none';return;}
+  nd.style.display='none';cwWrap.style.display='block';
+  const outerEl=document.getElementById('outer-'+inst.id);
+  const H=outerEl.clientHeight||CHART_H;const dpr=window.devicePixelRatio||1;
+  const totalCandleW=all.length*(CW+GAP)+GAP+20;
+  const cv=document.getElementById('cv-'+inst.id);
+  cv.width=totalCandleW*dpr;cv.height=H*dpr;cv.style.width=totalCandleW+'px';cv.style.height=H+'px';
+  document.getElementById('cw-wrap-'+inst.id).style.width=totalCandleW+'px';
+  const sa=document.getElementById('sa-'+inst.id);
+  if(live&&sa.scrollLeft+sa.clientWidth>=sa.scrollWidth-20)setTimeout(()=>{sa.scrollLeft=sa.scrollWidth;},0);
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,totalCandleW,H);
 
-function drawHistChart(inst, rows, orb) {
-  const all = aggregate(rows, ivMin);
-  _render(inst, all, false, orb.high, orb.low, false);
-}
+  let hi=-Infinity,lo=Infinity;
+  all.forEach(c=>{hi=Math.max(hi,c.high);lo=Math.min(lo,c.low);});
+  const pad=(hi-lo)*0.1||hi*0.002||1;hi+=pad;lo-=pad;
+  const range=hi-lo||1;
+  const toY=v=>YPAD+((hi-v)/range)*(H-YPAD*2);
 
-function _render(inst, all, isLast, orbHigh, orbLow, live) {
-  const nd     = document.getElementById(`nd-${inst.id}`);
-  const cwWrap = document.getElementById(`cw-wrap-${inst.id}`);
+  const steps=5;ctx.strokeStyle='#1a1e2c';ctx.lineWidth=0.5;
+  for(let i=0;i<=steps;i++){const v=lo+(hi-lo)*(i/steps);ctx.beginPath();ctx.moveTo(0,toY(v));ctx.lineTo(totalCandleW,toY(v));ctx.stroke();}
 
-  if (!all.length) {
-    nd.style.display = 'flex'; cwWrap.style.display = 'none'; return;
-  }
-  nd.style.display = 'none'; cwWrap.style.display = 'block';
+  const labelEvery=Math.max(1,Math.ceil(60/(CW+GAP)));
+  ctx.font=(8*dpr)+'px JetBrains Mono,monospace';ctx.fillStyle='#3d4460';ctx.textAlign='center';
+  all.forEach((c,i)=>{if(i%labelEvery!==0)return;ctx.fillText(c.time_label,i*(CW+GAP)+GAP+CW/2,H-2);});
 
-  const outerEl = document.getElementById(`outer-${inst.id}`);
-  const H       = outerEl.clientHeight || CHART_H;
-  const dpr     = window.devicePixelRatio || 1;
-
-  // ── Canvas dimensions ──
-  const totalCandleW = all.length * (CW + GAP) + GAP + 20; // +20 right padding
-  const cv  = document.getElementById(`cv-${inst.id}`);
-  cv.width  = totalCandleW * dpr;
-  cv.height = H * dpr;
-  cv.style.width  = totalCandleW + 'px';
-  cv.style.height = H + 'px';
-  cwWrap.style.width = totalCandleW + 'px';
-
-  // Auto-scroll to right on live
-  const sa = document.getElementById(`sa-${inst.id}`);
-  const wasAtEnd = sa.scrollLeft + sa.clientWidth >= sa.scrollWidth - 20;
-  if (live && wasAtEnd) setTimeout(() => { sa.scrollLeft = sa.scrollWidth; }, 0);
-
-  const ctx = cv.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, totalCandleW, H);
-
-  // ── Price range ──
-  let hi = -Infinity, lo = Infinity;
-  all.forEach(c => { hi = Math.max(hi, c.high); lo = Math.min(lo, c.low); });
-  // ORB levels must NOT expand the Y range — they're reference lines only.
-  // Letting orbLow from a different session drag `lo` far below current prices
-  // would squash all candles into a tiny band at the top of the chart.
-  const pad = (hi - lo) * 0.1 || hi * 0.002 || 1;
-  hi += pad; lo -= pad;
-  const range = hi - lo || 1;
-  const toY = v => YPAD + ((hi - v) / range) * (H - YPAD * 2);
-
-  // ── Grid lines (horizontal, span full canvas) ──
-  const steps = 5;
-  ctx.strokeStyle = '#1a1e2c'; ctx.lineWidth = 0.5;
-  for (let i = 0; i <= steps; i++) {
-    const v = lo + (hi - lo) * (i / steps);
-    const y = toY(v);
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(totalCandleW, y); ctx.stroke();
-  }
-
-  // ── Time labels (every N candles) ──
-  const labelEvery = Math.max(1, Math.ceil(60 / (CW + GAP)));
-  ctx.font = `${8 * dpr}px JetBrains Mono,monospace`;
-  ctx.fillStyle = '#3d4460'; ctx.textAlign = 'center';
-  all.forEach((c, i) => {
-    if (i % labelEvery !== 0) return;
-    const x = i * (CW + GAP) + GAP + CW / 2;
-    ctx.fillText(c.time_label, x, H - 2);
-  });
-
-  // ── ORB lines (only if within visible price range) ──
-  if (orbHigh != null && orbLow != null && orbHigh >= lo && orbLow <= hi) {
-    const yH = toY(orbHigh), yL = toY(orbLow);
-    ctx.save();
-    ctx.setLineDash([5,5]); ctx.strokeStyle = '#f6c90e'; ctx.lineWidth = 1; ctx.globalAlpha = 0.75;
-    ctx.beginPath(); ctx.moveTo(0,yH); ctx.lineTo(totalCandleW,yH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0,yL); ctx.lineTo(totalCandleW,yL); ctx.stroke();
-    ctx.setLineDash([]); ctx.restore();
-    // ORB labels on the right
-    ctx.save();
-    ctx.font = `${8*dpr}px JetBrains Mono,monospace`;
-    ctx.fillStyle='#f6c90e'; ctx.globalAlpha=0.85; ctx.textAlign='right';
-    ctx.fillText('ORB H '+fmt(orbHigh), totalCandleW-3, yH-3);
-    ctx.fillText('ORB L '+fmt(orbLow),  totalCandleW-3, yL+10);
+  if(orbHigh!=null&&orbLow!=null&&orbHigh>=lo&&orbLow<=hi){
+    const yH=toY(orbHigh),yL=toY(orbLow);
+    ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle='#f6c90e';ctx.lineWidth=1;ctx.globalAlpha=0.75;
+    ctx.beginPath();ctx.moveTo(0,yH);ctx.lineTo(totalCandleW,yH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,yL);ctx.lineTo(totalCandleW,yL);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+    ctx.save();ctx.font=(8*dpr)+'px JetBrains Mono,monospace';ctx.fillStyle='#f6c90e';ctx.globalAlpha=0.85;ctx.textAlign='right';
+    ctx.fillText('ORB H '+fmt(orbHigh),totalCandleW-3,yH-3);
+    ctx.fillText('ORB L '+fmt(orbLow),totalCandleW-3,yL+10);
     ctx.restore();
-    // Update ORB strip
-    document.getElementById(`orb-${inst.id}`).style.display = 'flex';
-    document.getElementById(`orbH-${inst.id}`).textContent = fmt(orbHigh);
-    document.getElementById(`orbL-${inst.id}`).textContent = fmt(orbLow);
+    document.getElementById('orb-'+inst.id).style.display='flex';
+    document.getElementById('orbH-'+inst.id).textContent=fmt(orbHigh);
+    document.getElementById('orbL-'+inst.id).textContent=fmt(orbLow);
   }
 
-  // ── Candles ──
-  all.forEach((c, i) => {
-    const x      = i * (CW + GAP) + GAP;
-    const isLive = isLast && i === all.length - 1;
-    const isUp   = c.close >= c.open;
-    const col    = isUp ? inst.color : '#f0415a';
-    const bodyTop= toY(Math.max(c.open, c.close));
-    const bodyBot= toY(Math.min(c.open, c.close));
-    const bodyH  = Math.max(1, bodyBot - bodyTop);
-    // Wick
-    ctx.strokeStyle = isLive ? col+'66' : '#2e3450'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x+CW/2, toY(c.high)); ctx.lineTo(x+CW/2, toY(c.low)); ctx.stroke();
-    // Body
-    ctx.fillStyle = isLive ? col+'55' : col;
-    ctx.fillRect(x, bodyTop, CW, bodyH);
-    if (isLive) { ctx.strokeStyle=col; ctx.lineWidth=1; ctx.strokeRect(x,bodyTop,CW,bodyH); }
+  all.forEach((c,i)=>{
+    const x=i*(CW+GAP)+GAP;const isLive=isLast&&i===all.length-1;
+    const isUp=c.close>=c.open;const col=isUp?inst.color:'#f0415a';
+    const bTop=toY(Math.max(c.open,c.close));const bBot=toY(Math.min(c.open,c.close));
+    const bH=Math.max(1,bBot-bTop);
+    ctx.strokeStyle=isLive?col+'66':'#2e3450';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x+CW/2,toY(c.high));ctx.lineTo(x+CW/2,toY(c.low));ctx.stroke();
+    ctx.fillStyle=isLive?col+'55':col;ctx.fillRect(x,bTop,CW,bH);
+    if(isLive){ctx.strokeStyle=col;ctx.lineWidth=1;ctx.strokeRect(x,bTop,CW,bH);}
   });
 
-  // ── Draw Y-axis (fixed panel) ──
-  _drawYAxis(inst, hi, lo, H, steps, orbHigh, orbLow);
-
-  // Store render info
-  D[inst.token]._render = { all, totalCandleW, hi, lo, H };
+  _drawYAxis(inst,hi,lo,H,steps,orbHigh,orbLow);
+  D[inst.token]._render={all,totalCandleW,hi,lo,H};
 }
 
-function _drawYAxis(inst, hi, lo, H, steps, orbHigh, orbLow) {
-  const yc  = document.getElementById(`yc-${inst.id}`);
-  const dpr = window.devicePixelRatio || 1;
-  yc.width  = YAXIS_W * dpr;
-  yc.height = H * dpr;
-  yc.style.width  = YAXIS_W + 'px';
-  yc.style.height = H + 'px';
-  const ctx   = yc.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, YAXIS_W, H);
-  const range = hi - lo || 1;
-  const toY   = v => YPAD + ((hi - v) / range) * (H - YPAD * 2);
-  ctx.font     = `${9*dpr}px JetBrains Mono,monospace`;
-  ctx.textAlign= 'right';
-  for (let i = 0; i <= steps; i++) {
-    const v = lo + (hi - lo) * (i / steps);
-    const y = toY(v);
-    ctx.fillStyle = '#3d4460';
-    ctx.fillText(fmt(v), YAXIS_W - 4, y + 3.5);
-  }
-  // ORB price labels on y-axis (only if within visible range)
-  if (orbHigh != null && orbHigh >= lo && orbHigh <= hi) {
-    ctx.fillStyle = '#f6c90e';
-    ctx.fillText(fmt(orbHigh), YAXIS_W-4, toY(orbHigh)-4);
-  }
-  if (orbLow != null && orbLow >= lo && orbLow <= hi) {
-    ctx.fillStyle = '#f6c90e';
-    ctx.fillText(fmt(orbLow), YAXIS_W-4, toY(orbLow)+11);
-  }
-  // Separator line
-  ctx.strokeStyle = '#1f2333'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(YAXIS_W-0.5, 0); ctx.lineTo(YAXIS_W-0.5, H); ctx.stroke();
+function _drawYAxis(inst,hi,lo,H,steps,orbHigh,orbLow){
+  const yc=document.getElementById('yc-'+inst.id);const dpr=window.devicePixelRatio||1;
+  yc.width=YAXIS_W*dpr;yc.height=H*dpr;yc.style.width=YAXIS_W+'px';yc.style.height=H+'px';
+  const ctx=yc.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,YAXIS_W,H);
+  const range=hi-lo||1;const toY=v=>YPAD+((hi-v)/range)*(H-YPAD*2);
+  ctx.font=(9*dpr)+'px JetBrains Mono,monospace';ctx.textAlign='right';
+  for(let i=0;i<=steps;i++){const v=lo+(hi-lo)*(i/steps);ctx.fillStyle='#3d4460';ctx.fillText(fmt(v),YAXIS_W-4,toY(v)+3.5);}
+  if(orbHigh!=null&&orbHigh>=lo&&orbHigh<=hi){ctx.fillStyle='#f6c90e';ctx.fillText(fmt(orbHigh),YAXIS_W-4,toY(orbHigh)-4);}
+  if(orbLow!=null&&orbLow>=lo&&orbLow<=hi){ctx.fillStyle='#f6c90e';ctx.fillText(fmt(orbLow),YAXIS_W-4,toY(orbLow)+11);}
+  ctx.strokeStyle='#1f2333';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(YAXIS_W-0.5,0);ctx.lineTo(YAXIS_W-0.5,H);ctx.stroke();
 }
 
-// ── LTP / OHLC UI ─────────────────────────────────────────────────────────────
-function updateLtpUI(inst) {
-  const d   = D[inst.token];
-  const el  = document.getElementById(`ltp-${inst.id}`);
-  const el2 = document.getElementById(`chg-${inst.id}`);
-  const el3 = document.getElementById(`chg-abs-${inst.id}`);
-  const el4 = document.getElementById(`prev-${inst.id}`);
-  if (d.ltp == null) return;
-
-  const dir = d.prevLtp == null ? 'fl' : d.ltp > d.prevLtp ? 'up' : d.ltp < d.prevLtp ? 'dn' : 'fl';
-  el.textContent = fmt(d.ltp);
-  el.className   = `ch-ltp ${dir}`;
-  setTimeout(() => { el.className = 'ch-ltp fl'; }, 400);
-
-  // Change vs prev close (from yesterday)
-  const base = d.prevClose ?? d.sessionOpen;
-  if (base != null) {
-    const diff = d.ltp - base;
-    const pct  = (diff / base * 100).toFixed(2);
-    const cls  = diff > 0 ? 'up' : diff < 0 ? 'dn' : 'fl';
-    el2.textContent = (diff>0?'+':'')+pct+'%';
-    el2.className   = 'ch-chg '+cls;
-    el3.textContent = (diff>0?'+':'')+fmt(diff);
-    el3.className   = 'ch-chg '+cls;
-    el4.textContent = d.prevClose != null ? 'vs prev ' + fmt(d.prevClose) : 'vs open ' + fmt(d.sessionOpen);
+function updateLtpUI(inst){
+  const d=D[inst.token];if(d.ltp==null)return;
+  const el=document.getElementById('ltp-'+inst.id);
+  const dir=d.prevLtp==null?'fl':d.ltp>d.prevLtp?'up':d.ltp<d.prevLtp?'dn':'fl';
+  el.textContent=fmt(d.ltp);el.className='ch-ltp '+dir;
+  setTimeout(()=>{el.className='ch-ltp fl';},400);
+  const base=d.prevClose??d.sessionOpen;
+  if(base!=null){
+    const diff=d.ltp-base;const pct=(diff/base*100).toFixed(2);const cls=diff>0?'up':diff<0?'dn':'fl';
+    document.getElementById('chg-'+inst.id).textContent=(diff>0?'+':'')+pct+'%';
+    document.getElementById('chg-'+inst.id).className='ch-chg '+cls;
+    document.getElementById('chg-abs-'+inst.id).textContent=(diff>0?'+':'')+fmt(diff);
+    document.getElementById('chg-abs-'+inst.id).className='ch-chg '+cls;
+    document.getElementById('prev-'+inst.id).textContent=d.prevClose!=null?'vs prev '+fmt(d.prevClose):'vs open '+fmt(d.sessionOpen);
   }
 }
-
-function updateOhlcUI(inst) {
-  const d = D[inst.token];
-  const c = d.liveC || (d.candles.length ? d.candles[d.candles.length-1] : null);
-  if (!c) return;
-  ['o','h','l','c'].forEach((k, i) => {
-    document.getElementById(`${k}-${inst.id}`).textContent = fmt(c[['open','high','low','close'][i]]);
-  });
-  document.getElementById(`meta-${inst.id}`).textContent =
-    `${ivMin}m · ${d.candles.length + (d.liveC ? 1 : 0)} candles`;
+function updateOhlcUI(inst){
+  const d=D[inst.token];const c=d.liveC||(d.candles.length?d.candles[d.candles.length-1]:null);if(!c)return;
+  ['o','h','l','c'].forEach((k,i)=>{document.getElementById(k+'-'+inst.id).textContent=fmt(c[['open','high','low','close'][i]]);});
+  document.getElementById('meta-'+inst.id).textContent=ivMin+'m · '+(d.candles.length+(d.liveC?1:0))+' candles';
+}
+function updateOhlcHistUI(inst,candle){
+  if(!candle)return;
+  ['o','h','l','c'].forEach((k,i)=>{document.getElementById(k+'-'+inst.id).textContent=fmt(candle[['open','high','low','close'][i]]);});
 }
 
-function updateOhlcHistUI(inst, candle) {
-  if (!candle) return;
-  ['o','h','l','c'].forEach((k, i) => {
-    document.getElementById(`${k}-${inst.id}`).textContent = fmt(candle[['open','high','low','close'][i]]);
-  });
-}
-
-// ── TOOLTIP + CROSSHAIR ───────────────────────────────────────────────────────
-function onHover(e, inst) {
-  const d = D[inst.token];
-  if (!d._render) return;
-  const { all } = d._render;
-  const sa   = document.getElementById(`sa-${inst.id}`);
-  const cv   = document.getElementById(`cv-${inst.id}`);
-  const rect = sa.getBoundingClientRect();
-  const mx   = e.clientX - rect.left + sa.scrollLeft;
-  const idx  = Math.floor((mx - GAP) / (CW + GAP));
-  if (idx < 0 || idx >= all.length) { hideTip(); hideXhair(inst); return; }
-  const c    = all[idx];
-  const xPos = idx * (CW + GAP) + GAP + CW/2 - sa.scrollLeft;
-  // Crosshair
-  const xhair = document.getElementById(`xhair-${inst.id}`);
-  xhair.style.display = 'block';
-  xhair.style.left    = xPos + 'px';
-  xhair.style.height  = '100%';
-  // Tooltip
-  const dir  = c.close >= c.open ? '#00d68f' : '#f0415a';
-  const pct  = ((c.close - c.open)/c.open*100).toFixed(2);
-  const tip  = document.getElementById('tip');
-  tip.innerHTML = `
-    <div class="tl">${c.time_label} · ${inst.label}</div>
+function onHover(e,inst){
+  const d=D[inst.token];if(!d._render)return;
+  const {all}=d._render;
+  const sa=document.getElementById('sa-'+inst.id);
+  const rect=sa.getBoundingClientRect();const mx=e.clientX-rect.left+sa.scrollLeft;
+  const idx=Math.floor((mx-GAP)/(CW+GAP));
+  if(idx<0||idx>=all.length){hideTip();hideXhair(inst);return;}
+  const c=all[idx];const xPos=idx*(CW+GAP)+GAP+CW/2-sa.scrollLeft;
+  const xh=document.getElementById('xhair-'+inst.id);xh.style.display='block';xh.style.left=xPos+'px';xh.style.height='100%';
+  const dir=c.close>=c.open?'#00d68f':'#f0415a';const pct=((c.close-c.open)/c.open*100).toFixed(2);
+  const tip=document.getElementById('tip');
+  tip.innerHTML=`<div class="tl">${c.time_label} · ${inst.label}</div>
     <div>O <b style="color:#dde3f0">${fmt(c.open)}</b> &nbsp; H <b style="color:#00d68f">${fmt(c.high)}</b></div>
     <div>L <b style="color:#f0415a">${fmt(c.low)}</b> &nbsp; C <b style="color:${dir}">${fmt(c.close)}</b></div>
-    <div style="color:${dir}">${c.close>=c.open?'+':''}${pct}%</div>
-  `;
-  tip.style.left = (e.clientX + 14) + 'px';
-  tip.style.top  = (e.clientY - 16) + 'px';
-  tip.classList.add('show');
+    <div style="color:${dir}">${c.close>=c.open?'+':''}${pct}%</div>`;
+  tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-16)+'px';tip.classList.add('show');
 }
-function hideTip()         { document.getElementById('tip').classList.remove('show'); }
-function hideXhair(inst)   { const x = document.getElementById(`xhair-${inst.id}`); if(x) x.style.display='none'; }
+function hideTip(){document.getElementById('tip').classList.remove('show');}
+function hideXhair(inst){const x=document.getElementById('xhair-'+inst.id);if(x)x.style.display='none';}
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-function fmt(v) {
-  if (v == null || isNaN(v)) return '–';
-  return v >= 1000 ? v.toLocaleString('en-IN',{maximumFractionDigits:2}) : v.toFixed(2);
-}
-function fmtTS(ts) {
-  const d   = new Date(ts * 1000);
-  const ist = new Date(d.getTime() + 5.5*3600000);
-  return ist.getUTCHours().toString().padStart(2,'0') + ':' + ist.getUTCMinutes().toString().padStart(2,'0');
-}
-
-// ── RESIZE ────────────────────────────────────────────────────────────────────
 let rzTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(rzTimer);
-  rzTimer = setTimeout(redrawAll, 200);
-});
+window.addEventListener('resize',()=>{clearTimeout(rzTimer);rzTimer=setTimeout(redrawAll,200);});
 
-// ── BOOT ──────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// CONTRIBUTION PAGE
+// ══════════════════════════════════════════════════════════
+let contribPollTimer=null, contribData={}, contribHistory={}, orderCache=[];
+let activeCtab='overview';
+const MAX_HIST=60;
+let contribBuilt=false;
+
+const fmtPts=v=>v==null?'–':(v>=0?'+':'')+v.toFixed(2);
+const fmtP=v=>v==null?'–':(v>=0?'+':'')+v.toFixed(2)+'%';
+const clsDir=v=>v==null?'':v>=0?'up':'dn';
+
+function switchCtab(id,btn){
+  activeCtab=id;
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.cpanel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('cpanel-'+id);if(panel)panel.classList.add('active');
+  if(id!=='overview'&&Object.keys(contribData).length)renderBankDetail(id);
+}
+
+function buildContribTabs(){
+  if(contribBuilt)return;contribBuilt=true;
+  const tabBar=document.getElementById('ctab-bar');
+  const wrap=document.getElementById('bank-panels-wrap');
+  CONSTITUENTS.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='ctab';btn.textContent=c.label;btn.dataset.ctab=c.token;
+    btn.onclick=()=>switchCtab(c.token,btn);
+    tabBar.appendChild(btn);
+    const div=document.createElement('div');
+    div.className='cpanel';div.id='cpanel-'+c.token;
+    div.innerHTML=`<div>
+      <div class="bd-header" style="border-left-color:${c.color}">
+        <div>
+          <div class="bd-name" style="color:${c.color}">${c.label}</div>
+          <div style="font-size:9px;color:var(--muted)">${c.symbol} · Weight ${(c.weight*100).toFixed(2)}%</div>
+        </div>
+        <div class="bd-ltp" id="bd-ltp-${c.token}">–</div>
+        <div class="bd-chg" id="bd-chg-${c.token}">–</div>
+        <div class="bd-pts-wrap">Contribution<br><b id="bd-pts-${c.token}">–</b> pts</div>
+        <div class="bd-meta">Prev Close: <b id="bd-pc-${c.token}">–</b><br>Weight: ${(c.weight*100).toFixed(2)}%</div>
+      </div>
+      <div class="hist-card" style="margin-top:10px">
+        <div class="sec-lbl">Contribution history (last ${MAX_HIST} ticks)</div>
+        <svg class="hist-svg" id="hist-svg-${c.token}" viewBox="0 0 600 80" preserveAspectRatio="none"></svg>
+      </div>
+    </div>`;
+    wrap.appendChild(div);
+    contribHistory[c.token]=[];
+  });
+}
+
+function renderBarChart(constituents){
+  const el=document.getElementById('bar-chart');
+  const sorted=Object.entries(constituents).filter(([,c])=>c.contrib_pts!=null).sort((a,b)=>Math.abs(b[1].contrib_pts)-Math.abs(a[1].contrib_pts));
+  orderCache=sorted.map(([t])=>t);
+  if(!sorted.length){el.innerHTML='<div style="color:var(--muted);font-size:10px;padding:8px 0">No data yet</div>';return;}
+  const maxAbs=Math.max(...sorted.map(([,c])=>Math.abs(c.contrib_pts)),0.01);
+  el.innerHTML=sorted.map(([token,c])=>{
+    const pct=(Math.abs(c.contrib_pts)/maxAbs*50).toFixed(2);const isUp=c.contrib_pts>=0;
+    return `<div class="bar-row">
+      <div class="bar-name" style="color:${c.color}" title="${c.label}">${c.label}</div>
+      <div class="bar-track"><div class="bar-zero"></div><div class="bar-fill ${isUp?'up':'dn'}" style="width:${pct}%"></div></div>
+      <div class="bar-pts ${isUp?'up':'dn'}">${fmtPts(c.contrib_pts)}</div>
+      <div class="bar-pct">${fmtP(c.pct_change)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStacked(constituents){
+  const bar=document.getElementById('stacked-bar');const leg=document.getElementById('stacked-legend');
+  const pos=Object.entries(constituents).filter(([,c])=>c.contrib_pts!=null&&c.contrib_pts>0);
+  const neg=Object.entries(constituents).filter(([,c])=>c.contrib_pts!=null&&c.contrib_pts<0);
+  const totPos=pos.reduce((s,[,c])=>s+c.contrib_pts,0)||0.01;
+  const totNeg=Math.abs(neg.reduce((s,[,c])=>s+c.contrib_pts,0))||0.01;
+  const total=totPos+totNeg||0.01;
+  const segs=[
+    ...pos.sort((a,b)=>b[1].contrib_pts-a[1].contrib_pts).map(([t,c])=>({c,pct:c.contrib_pts/total*100,up:true})),
+    ...neg.sort((a,b)=>a[1].contrib_pts-b[1].contrib_pts).map(([t,c])=>({c,pct:Math.abs(c.contrib_pts)/total*100,up:false})),
+  ];
+  bar.innerHTML=segs.map(({c,pct,up})=>`<div class="stk-seg" style="flex:${pct.toFixed(3)};background:${up?c.color:c.color+'55'}">
+    <div class="stk-tip"><b style="color:${c.color}">${c.label}</b><br>Contrib: ${fmtPts(c.contrib_pts)} pts<br>Change: ${fmtP(c.pct_change)}<br>Weight: ${(c.weight*100).toFixed(2)}%</div>
+  </div>`).join('');
+  leg.innerHTML=Object.entries(constituents).filter(([,c])=>c.contrib_pts!=null)
+    .sort((a,b)=>b[1].contrib_pts-a[1].contrib_pts)
+    .map(([,c])=>`<div class="leg-item"><div class="leg-dot" style="background:${c.color}"></div><span>${c.label}</span></div>`).join('');
+}
+
+function renderCards(constituents){
+  const el=document.getElementById('cards-grid');
+  el.innerHTML=Object.entries(constituents)
+    .sort((a,b)=>{const ai=orderCache.indexOf(a[0]),bi=orderCache.indexOf(b[0]);return(ai<0?999:ai)-(bi<0?999:bi);})
+    .map(([token,c])=>`<div class="mini-card ${clsDir(c.contrib_pts)}" onclick="switchCtab('${token}',document.querySelector('[data-ctab=\\'${token}\\']'))">
+      <div class="mc-sym">${c.symbol}</div>
+      <div class="mc-ltp" style="color:${c.color}">${fmt(c.ltp)}</div>
+      <div class="mc-row"><div class="mc-pts ${clsDir(c.contrib_pts)}">${fmtPts(c.contrib_pts)} pts</div><div class="mc-wt">${(c.weight*100).toFixed(2)}%</div></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px">${fmtP(c.pct_change)}</div>
+    </div>`).join('');
+}
+
+function renderBankDetail(token){
+  const c=contribData.constituents?.[token];if(!c)return;
+  const ltp=document.getElementById('bd-ltp-'+token);if(!ltp)return;
+  ltp.textContent=fmt(c.ltp);
+  const chg=document.getElementById('bd-chg-'+token);chg.textContent=fmtP(c.pct_change);chg.className='bd-chg '+clsDir(c.pct_change);
+  const pts=document.getElementById('bd-pts-'+token);pts.textContent=fmtPts(c.contrib_pts);pts.className=clsDir(c.contrib_pts);
+  const pc=document.getElementById('bd-pc-'+token);if(pc)pc.textContent=fmt(c.prev_close);
+  renderHistSvg(token);
+}
+
+function renderHistSvg(token){
+  const hist=contribHistory[token]||[];if(hist.length<2)return;
+  const svg=document.getElementById('hist-svg-'+token);if(!svg)return;
+  const W=600,H=80,PAD=6;
+  const mn=Math.min(...hist,0),mx=Math.max(...hist,0),rng=(mx-mn)||0.01;
+  const toX=i=>PAD+(i/(hist.length-1))*(W-PAD*2);
+  const toY=v=>PAD+((mx-v)/rng)*(H-PAD*2);
+  const zero=toY(0);
+  const pts=hist.map((v,i)=>toX(i)+','+toY(v)).join(' ');
+  const area='M'+toX(0)+','+zero+' '+hist.map((v,i)=>'L'+toX(i)+','+toY(v)).join(' ')+' L'+toX(hist.length-1)+','+zero+' Z';
+  const meta=contribData.constituents?.[token];const col=meta?.color||'#4f8ef7';const lastV=hist[hist.length-1];
+  svg.innerHTML=`<defs><linearGradient id="g${token}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${col}" stop-opacity="0.3"/><stop offset="100%" stop-color="${col}" stop-opacity="0.02"/>
+  </linearGradient></defs>
+  <line x1="${PAD}" y1="${zero}" x2="${W-PAD}" y2="${zero}" stroke="#252a3d" stroke-width="0.5"/>
+  <path d="${area}" fill="url(#g${token})"/>
+  <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="${toX(hist.length-1)}" cy="${toY(lastV)}" r="3" fill="${col}"/>
+  <text x="${PAD}" y="${H-1}" font-size="7" fill="#3d4460" font-family="JetBrains Mono,monospace">${hist.length} ticks</text>
+  <text x="${W-PAD}" y="${H-1}" text-anchor="end" font-size="8" fill="${lastV>=0?'#00d68f':'#f0415a'}" font-family="JetBrains Mono,monospace">${fmtPts(lastV)}</text>`;
+}
+
+async function pollContrib(){
+  try{
+    const res=await fetch(API+'/constituent-ltp');if(!res.ok)throw new Error(res.status);
+    const j=await res.json();contribData=j;const c=j.constituents||{};
+    Object.entries(c).forEach(([token,info])=>{
+      if(!contribHistory[token])contribHistory[token]=[];
+      if(info.contrib_pts!=null){contribHistory[token].push(info.contrib_pts);if(contribHistory[token].length>MAX_HIST)contribHistory[token].shift();}
+    });
+    if(j.bn_prev_close)document.getElementById('bn-pc-hdr').textContent=fmt(j.bn_prev_close);
+    document.getElementById('total-hdr').textContent=fmtPts(j.total_contrib);
+    document.getElementById('bn-contrib-sum').textContent=fmtPts(j.total_contrib);
+    // BN LTP from D state (already updated by charts poll)
+    const bnD=D[BANKNIFTY_TOKEN];
+    if(bnD?.ltp){
+      document.getElementById('bn-ltp').textContent=fmt(bnD.ltp);
+      if(j.bn_prev_close){
+        const diff=bnD.ltp-j.bn_prev_close;
+        const el=document.getElementById('bn-chg');
+        el.textContent=fmtPts(diff)+' pts  '+fmtP(diff/j.bn_prev_close*100);
+        el.className='bn-chg '+clsDir(diff);
+      }
+    }
+    buildContribTabs();
+    renderBarChart(c);renderStacked(c);renderCards(c);
+    if(activeCtab!=='overview')renderBankDetail(activeCtab);
+  }catch(e){}
+}
+
+function startContribPoll(){
+  if(contribPollTimer)clearInterval(contribPollTimer);
+  pollContrib();contribPollTimer=setInterval(pollContrib,POLL_CONTRIB);
+}
+
+// ══════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════
 buildCards();
 fetchDates();
 fetchPrevClose();
-// Load today's stored candles first (so opening mid-day shows full day from 09:15)
-fetchTodayCandles().then(() => startPoll());
+fetchTodayCandles().then(()=>startPoll());
+// Contribution polling starts lazily when tab is first clicked
 </script>
 </body>
 </html>
