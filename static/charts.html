@@ -501,6 +501,17 @@ function selectTopContribs(){
 function fmt(v){if(v==null||isNaN(v))return'–';return v>=1000?v.toLocaleString('en-IN',{maximumFractionDigits:2}):v.toFixed(2);}
 function nowISTDate(){return new Date(Date.now()+5.5*3600000).toISOString().slice(0,10);}
 function fmtTS(ts){const d=new Date(ts*1000+5.5*3600000);return d.getUTCHours().toString().padStart(2,'0')+':'+d.getUTCMinutes().toString().padStart(2,'0');}
+
+// Market-hours guard: only show candles within 09:15–15:30 IST.
+// ts is a Unix timestamp (seconds). Offset by 5.5 h to get IST then
+// compare HHMM as an integer (e.g. 915, 1530).
+function isMarketHours(ts){
+  const d=new Date(ts*1000+5.5*3600*1000);
+  const hhmm=d.getUTCHours()*100+d.getUTCMinutes();
+  return hhmm>=915&&hhmm<=1530;
+}
+function filterMarketCandles(rows){ return rows.filter(r=>isMarketHours(r.ts)); }
+
 function aggregate(raw,ivM){
   if(!ivM||ivM<=1)return raw.map(c=>({...c}));
   const out=[];
@@ -527,14 +538,14 @@ async function fetchPrevClose(){
 // ── Live ingest ────────────────────────────────────────────
 function ingestLiveTick(token,ltp,ts,slc){
   const d=D[token];if(d.sessionOpen==null)d.sessionOpen=ltp;d.prevLtp=d.ltp;d.ltp=ltp;
-  if(slc&&slc.start_ts!=null)d.liveC={ts:slc.start_ts,time_label:fmtTS(slc.start_ts),open:slc.open,high:slc.high,low:slc.low,close:slc.close};
+  if(slc&&slc.start_ts!=null&&isMarketHours(slc.start_ts))d.liveC={ts:slc.start_ts,time_label:fmtTS(slc.start_ts),open:slc.open,high:slc.high,low:slc.low,close:slc.close};
 }
 function maybeAccumulateLiveCandle(token){
   const d=D[token];const lc=d.liveC;if(!lc)return;
   const prev=prevLiveBucket[token];
   if(prev!=null&&lc.ts!==prev){
     const cs=d.candles;
-    if((!cs.length||cs[cs.length-1].ts!==prev)&&d._prevLiveC){
+    if((!cs.length||cs[cs.length-1].ts!==prev)&&d._prevLiveC&&isMarketHours(prev)){
       cs.push({...d._prevLiveC});
       if(cs.length===15){const orb=calcORB(cs);d.orbHigh=orb.high;d.orbLow=orb.low;}
     }
@@ -572,7 +583,7 @@ async function fetchHistorical(dateStr){
     if(data.error){INSTRUMENTS.forEach(inst=>{document.getElementById('nd-'+inst.id).textContent='⚠ '+data.error;});return;}
     if(data.source==='kite_api')fetchDates();
     INSTRUMENTS.forEach(inst=>{
-      const rows=data.candles?.[inst.token]||[];const orb=calcORB(rows);
+      const rows=filterMarketCandles(data.candles?.[inst.token]||[]);const orb=calcORB(rows);
       histD[inst.token]={candles:rows,orbHigh:orb.high,orbLow:orb.low};
       if(!rows.length){document.getElementById('nd-'+inst.id).textContent='No data for this date';return;}
       const last=rows[rows.length-1];
@@ -611,7 +622,7 @@ async function fetchTodayCandles(){
     const today=nowISTDate();const res=await fetch(API+'/index-candles?date='+today);const data=await res.json();
     if(data.error||!data.candles)return;
     INSTRUMENTS.forEach(inst=>{
-      const rows=data.candles?.[inst.token]||[];if(!rows.length)return;
+      const rows=filterMarketCandles(data.candles?.[inst.token]||[]);if(!rows.length)return;
       const d=D[inst.token];const existing=new Set(d.candles.map(c=>c.ts));
       rows.forEach(r=>{if(!existing.has(r.ts))d.candles.push(r);});
       d.candles.sort((a,b)=>a.ts-b.ts);
