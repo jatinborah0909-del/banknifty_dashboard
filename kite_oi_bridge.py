@@ -446,6 +446,10 @@ def _append_history():
 
 # ── INDEX TICK HANDLER ────────────────────────────────────────────────────────
 
+MARKET_OPEN  = dt.time(9, 15)
+MARKET_CLOSE = dt.time(15, 30)
+
+
 def handle_index_tick(tick: dict):
     """Update live LTP state and per-minute OHLC buffer for index instruments."""
     token = tick.get("instrument_token")
@@ -462,10 +466,20 @@ def handle_index_tick(tick: dict):
     elif hasattr(ts, "timestamp"):
         ts = ts.timestamp()
 
-    # Update live tick
+    # ── Market-hours guard ────────────────────────────────────────────────────
+    # Ignore ticks outside 09:15–15:30 IST so pre/post-market data is never
+    # stored as candles or plotted on the chart.
+    tick_time = ts_to_ist(ts).time()
+    in_market = MARKET_OPEN <= tick_time <= MARKET_CLOSE
+
+    # Always update the live LTP display (so the UI shows the current price),
+    # but only feed the OHLC candle buffer during market hours.
     with index_tick_lock:
         index_tick_state[token]["ltp"] = ltp
         index_tick_state[token]["ts"]  = ts
+
+    if not in_market:
+        return  # skip candle accumulation outside market hours
 
     # Update per-minute OHLC; seal completed candle when minute rolls over
     with index_buf_lock:
